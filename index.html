@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Simple Map</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+      }
+
+      #map-canvas, #map-canvas2 {
+        width: 600px;
+        height: 600px;
+      }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+    <script>
+var maps = [];
+function initialize() {
+  var initialZoom = 10;
+  var mapOptions = [
+    {
+      zoom: initialZoom,
+      center: new google.maps.LatLng(49.2815995, -123.1213593)
+    },
+    {
+      zoom: initialZoom,
+      center: new google.maps.LatLng(50.4020355, 30.5326905)
+    }
+  ];
+  var mapElementIds = ["map-canvas", "map-canvas2"];
+  var i;
+  for (i = 0; i < mapOptions.length; i++) {
+    maps.push(new google.maps.Map(document.getElementById(mapElementIds[i]), mapOptions[i]));
+  }
+
+  var isBoundsUpdateInProgress = false;
+  function updateBounds(mapIndex) {
+    if (isBoundsUpdateInProgress) {
+      return;
+    }
+    isBoundsUpdateInProgress = true;
+    var zoom = maps[mapIndex].getZoom();
+    var centerDiff = getLatLngDifference(mapOptions[mapIndex].center, maps[mapIndex].getCenter());
+    var i;
+    for (i = 0; i < maps.length; i++) {
+      if (i === mapIndex) {
+        continue;
+      }
+      maps[i].setZoom(zoom);
+      maps[i].setCenter(latLngByApplyingDifference(mapOptions[i].center, centerDiff));
+    }
+    isBoundsUpdateInProgress = false;
+  }
+
+  for (i = 0; i < maps.length; i++) {
+    google.maps.event.addDomListener(maps[i], "bounds_changed", updateBounds.bind(undefined, i));
+  }
+}
+
+function getLatLngDifference(latLng1, latLng2) {
+  return {
+    "latDiff": latLng2.lat() - latLng1.lat(),
+    "lngDiff": latLng2.lng() - latLng1.lng()
+  };
+}
+
+function latLngByApplyingDifference(latLng, latLngDiff) {
+  return new google.maps.LatLng(
+    latLng.lat() + latLngDiff.latDiff,
+    latLng.lng() + latLngDiff.lngDiff
+  );
+}
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+    </script>
+  </head>
+  <body>
+    <table>
+      <tbody>
+        <tr>
+          <td>
+            <div id="map-canvas"></div>
+          </td>
+          <td>
+            <div id="map-canvas2"></div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>
