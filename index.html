@@ -21,43 +21,55 @@
 var maps = [];
 function initialize() {
   var initialZoom = 10;
-  var mapOptions = [
+  var mapSettings = [
     {
-      zoom: initialZoom,
-      center: new google.maps.LatLng(49.2815995, -123.1213593)
+      center: new google.maps.LatLng(49.2815995, -123.1213593),
+      elementId: "map-canvas"
     },
     {
-      zoom: initialZoom,
-      center: new google.maps.LatLng(50.4020355, 30.5326905)
+      center: new google.maps.LatLng(50.4020355, 30.5326905),
+      elementId: "map-canvas2"
     }
   ];
-  var mapElementIds = ["map-canvas", "map-canvas2"];
   var i;
-  for (i = 0; i < mapOptions.length; i++) {
-    maps.push(new google.maps.Map(document.getElementById(mapElementIds[i]), mapOptions[i]));
-  }
+  mapSettings.forEach(function(mapSetting, i) {
+    var map = new google.maps.Map(document.getElementById(mapSettings[i].elementId), {
+      zoom: initialZoom,
+      center: mapSetting.center
+    });
+    maps.push(map);
+    var marker = new google.maps.Marker({
+      position: mapSetting.center,
+      map: map,
+      draggable: true
+    });
+    google.maps.event.addDomListener(marker, "dragend", function() {
+      mapSettings[i].center = marker.getPosition();
+      syncBoundsWithMap(i);
+    });
+  });
 
   var isBoundsUpdateInProgress = false;
-  function updateBounds(mapIndex) {
+  function syncBoundsWithMap(mapIndex) {
     if (isBoundsUpdateInProgress) {
       return;
     }
     isBoundsUpdateInProgress = true;
     var zoom = maps[mapIndex].getZoom();
-    var centerDiff = getLatLngDifference(mapOptions[mapIndex].center, maps[mapIndex].getCenter());
+    var centerDiff = getLatLngDifference(mapSettings[mapIndex].center, maps[mapIndex].getCenter());
     var i;
     for (i = 0; i < maps.length; i++) {
       if (i === mapIndex) {
         continue;
       }
       maps[i].setZoom(zoom);
-      maps[i].setCenter(latLngByApplyingDifference(mapOptions[i].center, centerDiff));
+      maps[i].setCenter(latLngByApplyingDifference(mapSettings[i].center, centerDiff));
     }
     isBoundsUpdateInProgress = false;
   }
 
   for (i = 0; i < maps.length; i++) {
-    google.maps.event.addDomListener(maps[i], "bounds_changed", updateBounds.bind(undefined, i));
+    google.maps.event.addDomListener(maps[i], "bounds_changed", syncBoundsWithMap.bind(undefined, i));
   }
 }
 
