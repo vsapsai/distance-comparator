@@ -83,12 +83,19 @@ var DistanceComparator = (function() {
         this.circle.setVisible(true);
     };
 
-    var DistanceComparator = function() {
+    var DistanceComparator = function(mapSettings, initialZoom) {
         this.maps = [];
         this.locationMarker = new google.maps.Marker({
             icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
         });
         this.isBoundsUpdateInProgress = false;
+        var self = this;
+        mapSettings.forEach(function(mapSetting, i) {
+            var map = new MapView(mapSetting, initialZoom);
+            map.delegate = self;
+            map.tag = i;
+            self.maps.push(map);
+        });
     };
 
     DistanceComparator.prototype.syncBoundsWithMap = function(mapIndex) {
@@ -124,21 +131,7 @@ var DistanceComparator = (function() {
         }
     };
 
-    DistanceComparator.prototype.attach = function(mapSettings, initialZoom) {
-        var self = this;
-        mapSettings.forEach(function(mapSetting, i) {
-            var map = new MapView(mapSetting, initialZoom);
-            map.delegate = self;
-            map.tag = i;
-            self.maps.push(map);
-        });
-    };
-
     var exportObject = {};
-    exportObject.initialize = function(mapSettings, initialZoom) {
-        var distanceComparator = new DistanceComparator();
-        distanceComparator.attach(mapSettings, initialZoom);
-    };
-
+    exportObject.DistanceComparator = DistanceComparator;
     return exportObject;
 })();

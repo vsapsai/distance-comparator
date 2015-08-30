@@ -31,7 +31,7 @@ function initialize() {
       element: document.getElementById("map-canvas2")
     }
   ];
-  DistanceComparator.initialize(mapSettings, initialZoom);
+  var comparator = new DistanceComparator.DistanceComparator(mapSettings, initialZoom);
 }
 
 google.maps.event.addDomListener(window, 'load', initialize);
