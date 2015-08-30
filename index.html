@@ -24,11 +24,11 @@ function initialize() {
   var mapSettings = [
     {
       center: new google.maps.LatLng(49.2815995, -123.1213593),
-      elementId: "map-canvas"
+      element: document.getElementById("map-canvas")
     },
     {
       center: new google.maps.LatLng(50.4020355, 30.5326905),
-      elementId: "map-canvas2"
+      element: document.getElementById("map-canvas2")
     }
   ];
   DistanceComparator.initialize(mapSettings, initialZoom);

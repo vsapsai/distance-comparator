@@ -23,7 +23,7 @@ var DistanceComparator = (function() {
     exportObject.initialize = function(mapSettings, initialZoom) {
           var i;
           mapSettings.forEach(function(mapSetting, i) {
-            var map = new google.maps.Map(document.getElementById(mapSettings[i].elementId), {
+            var map = new google.maps.Map(mapSettings[i].element, {
               zoom: initialZoom,
               center: mapSetting.center,
               disableDoubleClickZoom: true
