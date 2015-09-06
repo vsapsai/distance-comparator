@@ -91,12 +91,14 @@ describe("DistanceComparator", function() {
             expect(circle0CreationConfig.center).toEqual(mapSettings[0].center);
             expect(circle0CreationConfig.map).toEqual(maps[0].mockWrapper);
             expect(circle0CreationConfig.visible).toBeFalsy();
+            expect(circle0CreationConfig.clickable).toEqual(false);
             // Verify 2nd circle.
             expect(circles[1].__constructor__.calls.count()).toEqual(1);
             var circle1CreationConfig = circles[1].__constructor__.calls.argsFor(0)[0];
             expect(circle1CreationConfig.center).toEqual(mapSettings[1].center);
             expect(circle1CreationConfig.map).toEqual(maps[1].mockWrapper);
             expect(circle1CreationConfig.visible).toBeFalsy();
+            expect(circle1CreationConfig.clickable).toEqual(false);
         });
     });
 
