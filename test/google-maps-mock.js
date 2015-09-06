@@ -8,6 +8,18 @@ var google = {
     }
 };
 
+// Simplified implementation of google.maps.LatLng suitable for tests.
+google.maps.LatLng = function(lat, lng) {
+    this._lat = lat;
+    this._lng = lng;
+};
+google.maps.LatLng.prototype.lat = function() {
+    return this._lat;
+};
+google.maps.LatLng.prototype.lng = function() {
+    return this._lng;
+};
+
 function mockClass(className, methods, objectsContainer) {
     var methodsWithConstructor = methods.slice();
     methodsWithConstructor.push("__constructor__");
@@ -17,11 +29,10 @@ function mockClass(className, methods, objectsContainer) {
         this.spy.__constructor__.apply(this.spy, arguments);
         objectsContainer.push(this.spy);
     };
-    var i;
-    for (i = 0; i < methods.length; i++) {
+    methods.forEach(function(methodName) {
         mockedClass.prototype[methodName] = function(args) {
-            this.spy[methodName].apply(this.spy, arguments);
+            return this.spy[methodName].apply(this.spy, arguments);
         }
-    }
+    });
     return mockedClass;
 };

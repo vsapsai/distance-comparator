@@ -4,33 +4,46 @@ describe("DistanceComparator", function() {
     var maps;
     var markers;
     var circles;
+    var mapSettings = [
+        {
+            center: new google.maps.LatLng(0, 0),
+            element: "element1"
+        },
+        {
+            center: new google.maps.LatLng(100, 100),
+            element: "element2"
+        }
+    ];
+    var zoom = 10;
 
-    beforeEach(function() {
+    function mockGoogleMaps() {
         maps = [];
         markers = [];
         circles = [];
-        google.maps.Map = mockClass("Map", [], maps);
+        google.maps.Map = mockClass("Map", ["getZoom", "setZoom", "getCenter", "setCenter"], maps);
         google.maps.Marker = mockClass("Marker", [], markers);
         google.maps.Circle = mockClass("Circle", [], circles);
         google.maps.event.addDomListener = jasmine.createSpy("addDomListener");
-    });
+    }
+
+    function getEventHandler(instance, eventName) {
+        var calls = google.maps.event.addDomListener.calls;
+        var i;
+        for (i = 0; i < calls.count(); i++) {
+            var callArgs = calls.argsFor(i);
+            if ((instance === callArgs[0]) && (eventName === callArgs[1])) {
+                return callArgs[2];
+            }
+        }
+        return undefined;
+    }
+
+    beforeEach(mockGoogleMaps);
 
     //TODO(vsapsai): test all functionality when both reference points
     // specified, 1 point, and no reference points.
 
     describe("creation", function() {
-        var mapSettings = [
-            {
-                center: "map1 center",
-                element: "element1"
-            },
-            {
-                center: "map2 center",
-                element: "element2"
-            }
-        ];
-        var zoom = 10;
-
         it("creates maps according to mapSettings", function() {
             var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
             expect(comparator).not.toBeNull();
@@ -88,7 +101,29 @@ describe("DistanceComparator", function() {
     });
 
     describe("movement and zoom", function() {
+        it("synchronizes map movement", function() {
+            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            // Mock movement by 10, 20.
+            maps[0].getCenter.and.returnValue(new google.maps.LatLng(10, 20));
 
+            var boundsChangedHandler = getEventHandler(maps[0].mockWrapper, "bounds_changed");
+            expect(boundsChangedHandler).toBeDefined();
+            boundsChangedHandler();
+            expect(maps[1].setCenter.calls.mostRecent().args[0].lat()).toEqual(110);
+            expect(maps[1].setCenter.calls.mostRecent().args[0].lng()).toEqual(120);
+        });
+
+        it("synchronizes map zoom", function() {
+            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            var newZoom = 42;
+            maps[1].getZoom.and.returnValue(newZoom);
+            maps[1].getCenter.and.returnValue(mapSettings[1].center);
+
+            var boundsChangedHandler = getEventHandler(maps[1].mockWrapper, "bounds_changed");
+            expect(boundsChangedHandler).toBeDefined();
+            boundsChangedHandler();
+            expect(maps[0].setZoom.calls.mostRecent().args[0]).toEqual(newZoom);
+        });
     });
 
     describe("double click", function() {
