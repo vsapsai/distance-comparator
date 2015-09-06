@@ -8,7 +8,8 @@ var google = {
     }
 };
 
-// Simplified implementation of google.maps.LatLng suitable for tests.
+// Simplified implementation of google.maps parts suitable for tests.  In life
+// the Earth is geoid, in tests it is a rectangle.
 google.maps.LatLng = function(lat, lng) {
     this._lat = lat;
     this._lng = lng;
@@ -18,6 +19,11 @@ google.maps.LatLng.prototype.lat = function() {
 };
 google.maps.LatLng.prototype.lng = function() {
     return this._lng;
+};
+google.maps.geometry.spherical.computeDistanceBetween = function(from, to) {
+    var latDifference = to.lat() - from.lat();
+    var lngDifference = to.lng() - from.lng();
+    return Math.sqrt(latDifference*latDifference + lngDifference*lngDifference);
 };
 
 function mockClass(className, methods, objectsContainer) {

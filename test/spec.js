@@ -21,8 +21,8 @@ describe("DistanceComparator", function() {
         markers = [];
         circles = [];
         google.maps.Map = mockClass("Map", ["getZoom", "setZoom", "getCenter", "setCenter"], maps);
-        google.maps.Marker = mockClass("Marker", [], markers);
-        google.maps.Circle = mockClass("Circle", [], circles);
+        google.maps.Marker = mockClass("Marker", ["setMap", "setPosition"], markers);
+        google.maps.Circle = mockClass("Circle", ["setRadius", "setVisible"], circles);
         google.maps.event.addDomListener = jasmine.createSpy("addDomListener");
     }
 
@@ -127,7 +127,38 @@ describe("DistanceComparator", function() {
     });
 
     describe("double click", function() {
+        it("puts comparison location marker on double click point", function() {
+            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
 
+            var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
+            expect(doubleClickHandler).toBeDefined();
+            doubleClickHandler({latLng: new google.maps.LatLng(23, 56)});
+            expect(markers[0].setPosition.calls.mostRecent().args[0].lat()).toEqual(23);
+            expect(markers[0].setPosition.calls.mostRecent().args[0].lng()).toEqual(56);
+        });
+
+        it("moves comparison location marker to double clicked map", function() {
+            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            var mockEvent = {latLng: new google.maps.LatLng(42, 42)};
+            var doubleClickHandler1 = getEventHandler(maps[0].mockWrapper, "dblclick");
+            doubleClickHandler1(mockEvent);
+            expect(markers[0].setMap).toHaveBeenCalledWith(maps[0].mockWrapper);
+            var doubleClickHandler2 = getEventHandler(maps[1].mockWrapper, "dblclick");
+            doubleClickHandler2(mockEvent);
+            expect(markers[0].setMap).toHaveBeenCalledWith(maps[1].mockWrapper);
+        });
+
+        it("shows circles with radius as distance from reference point to comparison point", function() {
+            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+
+            var doubleClickHandler = getEventHandler(maps[1].mockWrapper, "dblclick");
+            expect(doubleClickHandler).toBeDefined();
+            doubleClickHandler({latLng: new google.maps.LatLng(130, 140)});
+            expect(circles[0].setRadius).toHaveBeenCalledWith(50);
+            expect(circles[0].setVisible).toHaveBeenCalledWith(true);
+            expect(circles[1].setRadius).toHaveBeenCalledWith(50);
+            expect(circles[1].setVisible).toHaveBeenCalledWith(true);
+        });
     });
 
     describe("dragging reference point", function() {
