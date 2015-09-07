@@ -21,8 +21,8 @@ describe("DistanceComparator", function() {
         markers = [];
         circles = [];
         google.maps.Map = mockClass("Map", ["getZoom", "setZoom", "getCenter", "setCenter"], maps);
-        google.maps.Marker = mockClass("Marker", ["setMap", "setPosition"], markers);
-        google.maps.Circle = mockClass("Circle", ["setRadius", "setVisible"], circles);
+        google.maps.Marker = mockClass("Marker", ["property:Map", "property:Position"], markers);
+        google.maps.Circle = mockClass("Circle", ["setRadius", "setVisible", "setCenter"], circles);
         google.maps.event.addDomListener = jasmine.createSpy("addDomListener");
     }
 
@@ -164,7 +164,54 @@ describe("DistanceComparator", function() {
     });
 
     describe("dragging reference point", function() {
+        it("moves another map to have reference point in the same position relative to the map center", function() {
+            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            // Simulate dragging reference point by 10, 20 which requires moving
+            // another map by the same distance in opposite direction.
+            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+            markers[1].getPosition.and.returnValue(new google.maps.LatLng(10, 20));
 
+            var dragHandler = getEventHandler(markers[1].mockWrapper, "dragend");
+            expect(dragHandler).toBeDefined();
+            dragHandler();
+            expect(maps[1].setCenter.calls.mostRecent().args[0].lat()).toEqual(90);
+            expect(maps[1].setCenter.calls.mostRecent().args[0].lng()).toEqual(80);
+            expect(maps[0].setCenter).not.toHaveBeenCalled();
+        });
+
+        it("updates circle center on the same map", function() {
+            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            maps[1].getCenter.and.returnValue(mapSettings[1].center);
+            markers[2].getPosition.and.returnValue(new google.maps.LatLng(120, 110));
+
+            var dragHandler = getEventHandler(markers[2].mockWrapper, "dragend");
+            expect(dragHandler).toBeDefined();
+            dragHandler();
+            expect(circles[1].setCenter.calls.mostRecent().args[0].lat()).toEqual(120);
+            expect(circles[1].setCenter.calls.mostRecent().args[0].lng()).toEqual(110);
+            expect(circles[0].setCenter).not.toHaveBeenCalled();
+        });
+
+        it("updates circle radius if the same map has comparison point marker", function() {
+            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            // Put a comparison point marker.
+            var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
+            var comparisonPoint = new google.maps.LatLng(10, 0);
+            //markers[0].getPosition
+            doubleClickHandler({latLng: comparisonPoint});
+            // Simulate dragging reference point.
+            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+            markers[1].getPosition.and.returnValue(new google.maps.LatLng(10, 20));
+            var dragHandler = getEventHandler(markers[1].mockWrapper, "dragend");
+            dragHandler();
+
+            expect(circles[0].setRadius.calls.count()).toEqual(2);
+            expect(circles[0].setRadius.calls.mostRecent().args[0]).toEqual(20);
+            expect(circles[0].setCenter.calls.count()).toEqual(1);
+            expect(circles[1].setRadius.calls.count()).toEqual(2);
+            expect(circles[1].setRadius.calls.mostRecent().args[0]).toEqual(20);
+            expect(circles[1].setCenter.calls.count()).toEqual(0);
+        });
     });
 
     describe("dragging comparison point", function() {

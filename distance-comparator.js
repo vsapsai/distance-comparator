@@ -50,7 +50,7 @@ var DistanceComparator = (function() {
         google.maps.event.addDomListener(marker, "dragend", function() {
             self.referencePoint = marker.getPosition();
             self.circle.setCenter(self.referencePoint);
-            self.delegate.mapDidMove(self);
+            self.delegate.mapDidMove(self, /*didReferencePointMove =*/true);
         });
     };
 
@@ -116,19 +116,28 @@ var DistanceComparator = (function() {
         this.isBoundsUpdateInProgress = false;
     };
 
-    DistanceComparator.prototype.mapDidMove = function(mapView) {
+    DistanceComparator.prototype.syncCircleRadiusWithMap = function(mapView) {
+        var radius = mapView.getDistanceToReferencePoint(this.locationMarker.getPosition());
+        var i;
+        for (i = 0; i < this.maps.length; i++) {
+            this.maps[i].setCircleRadius(radius);
+        }
+    };
+
+    DistanceComparator.prototype.mapDidMove = function(mapView, didReferencePointMove) {
         this.syncBoundsWithMap(mapView.tag);
+        if (didReferencePointMove) {
+            // Update circles' radii if reference point changed in comparison point map.
+            if (this.locationMarker.getMap() === mapView.getMap()) {
+                this.syncCircleRadiusWithMap(mapView);
+            }
+        }
     };
 
     DistanceComparator.prototype.mapDidDoubleClick = function(mapView, event) {
         this.locationMarker.setMap(mapView.getMap());
         this.locationMarker.setPosition(event.latLng);
-
-        var radius = mapView.getDistanceToReferencePoint(event.latLng);
-        var i;
-        for (i = 0; i < this.maps.length; i++) {
-            this.maps[i].setCircleRadius(radius);
-        }
+        this.syncCircleRadiusWithMap(mapView);
     };
 
     var exportObject = {};

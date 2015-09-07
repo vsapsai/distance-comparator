@@ -10,3 +10,9 @@
 1. Double click the map on the left => a marker should be put on the double click position, circle with a center at reference point and going through comparison point should be shown on the left map, circle of the same size should be shown at the right map.
 2. Double click the map on the left within the circle => the comparison marker should move to a new position, circle should become smaller.
 3. Double click the map on the right => the comparison marker should be shown on the right map, circles should update radii.
+
+## Dragging reference point should update its position.
+1. Drag the reference point on the left map to the lower right corner => the right map should keep reference point at the same coordinates and update map so that the reference marker is in the lower right corner too.
+2. Double click on the left map.
+3. Drag the reference point on the left map to the center => circle on the left map has center at the reference point ang goes through comparison point, circle on the right map has the same radius as on the left.
+4. Drag the reference point on the right map => circles' radius should stay the same.
