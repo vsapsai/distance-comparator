@@ -20,7 +20,10 @@ var DistanceComparator = (function() {
      */
     var MapView = function(mapConfig, zoom) {
         this.referencePoint = mapConfig.center;
-        this.map = new google.maps.Map(mapConfig.element, {
+
+        var mapElement = this.createMapElement();
+        mapConfig.element.appendChild(mapElement);
+        this.map = new google.maps.Map(mapElement, {
             zoom: zoom,
             center: mapConfig.center,
             disableDoubleClickZoom: true  // We use double click for a different purpose.
@@ -52,6 +55,12 @@ var DistanceComparator = (function() {
             self.circle.setCenter(self.referencePoint);
             self.delegate.mapDidMove(self, /*didReferencePointMove =*/true);
         });
+    };
+
+    MapView.prototype.createMapElement = function() {
+        var mapElement = document.createElement("div");
+        mapElement.classList.add("map-placeholder");
+        return mapElement;
     };
 
     MapView.prototype.getMap = function() {
