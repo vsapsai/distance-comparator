@@ -5,14 +5,13 @@ describe("DistanceComparator", function() {
     var markers;
     var circles;
     var searchBoxes;
+    var root = document.createElement("div");
     var mapSettings = [
         {
-            center: new google.maps.LatLng(0, 0),
-            element: document.createElement("div")
+            center: new google.maps.LatLng(0, 0)
         },
         {
-            center: new google.maps.LatLng(100, 100),
-            element: document.createElement("div")
+            center: new google.maps.LatLng(100, 100)
         }
     ];
     var zoom = 10;
@@ -43,6 +42,10 @@ describe("DistanceComparator", function() {
         return undefined;
     }
 
+    function createDistanceComparator() {
+        return new DistanceComparator.DistanceComparator(root, mapSettings, zoom);
+    }
+
     beforeEach(mockGoogleMaps);
 
     //TODO(vsapsai): test all functionality when both reference points
@@ -50,12 +53,12 @@ describe("DistanceComparator", function() {
 
     describe("creation", function() {
         it("creates maps according to mapSettings", function() {
-            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            var comparator = createDistanceComparator()
             expect(comparator).not.toBeNull();
             expect(maps.length).toEqual(2);
             // Verify 1st map.
             expect(maps[0].__constructor__.calls.count()).toEqual(1);
-            expect(mapSettings[0].element.contains(maps[0].__constructor__.calls.argsFor(0)[0])).toBe(true);
+            expect(root.contains(maps[0].__constructor__.calls.argsFor(0)[0])).toBe(true);
             expect(maps[0].__constructor__.calls.argsFor(0)[0].classList.contains("map-placeholder")).toBe(true);
             var map0CreationConfig = maps[0].__constructor__.calls.argsFor(0)[1];
             expect(map0CreationConfig.center).toEqual(mapSettings[0].center);
@@ -63,7 +66,7 @@ describe("DistanceComparator", function() {
             expect(map0CreationConfig.disableDoubleClickZoom).toBeTruthy();
             // Verify 2nd map.
             expect(maps[1].__constructor__.calls.count()).toEqual(1);
-            expect(mapSettings[1].element.contains(maps[1].__constructor__.calls.argsFor(0)[0])).toBe(true);
+            expect(root.contains(maps[1].__constructor__.calls.argsFor(0)[0])).toBe(true);
             expect(maps[1].__constructor__.calls.argsFor(0)[0].classList.contains("map-placeholder")).toBe(true);
             var map1CreationConfig = maps[1].__constructor__.calls.argsFor(0)[1];
             expect(map1CreationConfig.center).toEqual(mapSettings[1].center);
@@ -72,7 +75,7 @@ describe("DistanceComparator", function() {
         });
 
         it("creates markers for reference points and comparison point", function() {
-            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            var comparator = createDistanceComparator();
             expect(markers.length).toEqual(3);
             // Verify comparison point marker.
             expect(markers[0].__constructor__.calls.count()).toEqual(1);
@@ -90,7 +93,7 @@ describe("DistanceComparator", function() {
         });
 
         it("creates invisible circles for later", function() {
-            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            var comparator = createDistanceComparator();
             expect(circles.length).toEqual(2);
             // Verify 1st circle.
             expect(circles[0].__constructor__.calls.count()).toEqual(1);
@@ -109,7 +112,7 @@ describe("DistanceComparator", function() {
         });
 
         it("creates reference point search boxes", function() {
-            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            var comparator = createDistanceComparator();
             expect(searchBoxes.length).toEqual(2);
             var mapControls = google.maps.Map.prototype.controls[google.maps.ControlPosition.TOP_LEFT];
             expect(mapControls.length).toEqual(2);
@@ -130,7 +133,7 @@ describe("DistanceComparator", function() {
 
     describe("movement and zoom", function() {
         it("synchronizes map movement", function() {
-            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            var comparator = createDistanceComparator();
             // Mock movement by 10, 20.
             maps[0].getCenter.and.returnValue(new google.maps.LatLng(10, 20));
 
@@ -142,7 +145,7 @@ describe("DistanceComparator", function() {
         });
 
         it("synchronizes map zoom", function() {
-            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            var comparator = createDistanceComparator();
             var newZoom = 42;
             maps[1].getZoom.and.returnValue(newZoom);
             maps[1].getCenter.and.returnValue(mapSettings[1].center);
@@ -156,7 +159,7 @@ describe("DistanceComparator", function() {
 
     describe("double click", function() {
         it("puts comparison location marker on double click point", function() {
-            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            var comparator = createDistanceComparator();
 
             var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
             expect(doubleClickHandler).toBeDefined();
@@ -166,7 +169,7 @@ describe("DistanceComparator", function() {
         });
 
         it("moves comparison location marker to double clicked map", function() {
-            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            var comparator = createDistanceComparator();
             var mockEvent = {latLng: new google.maps.LatLng(42, 42)};
             var doubleClickHandler1 = getEventHandler(maps[0].mockWrapper, "dblclick");
             doubleClickHandler1(mockEvent);
@@ -177,7 +180,7 @@ describe("DistanceComparator", function() {
         });
 
         it("shows circles with radius as distance from reference point to comparison point", function() {
-            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            var comparator = createDistanceComparator();
 
             var doubleClickHandler = getEventHandler(maps[1].mockWrapper, "dblclick");
             expect(doubleClickHandler).toBeDefined();
@@ -191,7 +194,7 @@ describe("DistanceComparator", function() {
 
     describe("dragging reference point", function() {
         it("moves another map to have reference point in the same position relative to the map center", function() {
-            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            var comparator = createDistanceComparator();
             // Simulate dragging reference point by 10, 20 which requires moving
             // another map by the same distance in opposite direction.
             maps[0].getCenter.and.returnValue(mapSettings[0].center);
@@ -206,7 +209,7 @@ describe("DistanceComparator", function() {
         });
 
         it("updates circle center on the same map", function() {
-            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            var comparator = createDistanceComparator();
             maps[1].getCenter.and.returnValue(mapSettings[1].center);
             markers[2].getPosition.and.returnValue(new google.maps.LatLng(120, 110));
 
@@ -219,7 +222,7 @@ describe("DistanceComparator", function() {
         });
 
         it("updates circle radius if the same map has comparison point marker", function() {
-            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            var comparator = createDistanceComparator();
             // Put a comparison point marker.
             var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
             var comparisonPoint = new google.maps.LatLng(10, 0);
@@ -246,7 +249,7 @@ describe("DistanceComparator", function() {
 
     describe("reference point search", function() {
         it("moves map to reflect new reference point", function() {
-            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            var comparator = createDistanceComparator();
             // Simulate the reference point is to the left and to the bottom relative to the map center.
             maps[0].getCenter.and.returnValue(new google.maps.LatLng(10, 20));
             var stubPlace = {
@@ -263,7 +266,7 @@ describe("DistanceComparator", function() {
         });
 
         it("updates reference point marker and circle", function() {
-            var comparator = new DistanceComparator.DistanceComparator(mapSettings, zoom);
+            var comparator = createDistanceComparator();
             // Simulate the reference point is to the left and to the bottom relative to the map center.
             maps[0].getCenter.and.returnValue(mapSettings[0].center);
             var stubPlace = {

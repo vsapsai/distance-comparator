@@ -18,11 +18,11 @@ var DistanceComparator = (function() {
     /**
      * Represents a single map.
      */
-    var MapView = function(mapConfig, zoom) {
+    var MapView = function(parentElement, mapConfig, zoom) {
         this.referencePoint = mapConfig.center;
 
         var mapElement = this.createMapElement();
-        mapConfig.element.appendChild(mapElement);
+        parentElement.appendChild(mapElement);
         this.map = new google.maps.Map(mapElement, {
             zoom: zoom,
             center: mapConfig.center,
@@ -114,7 +114,7 @@ var DistanceComparator = (function() {
         this.circle.setVisible(true);
     };
 
-    var DistanceComparator = function(mapSettings, initialZoom) {
+    var DistanceComparator = function(comparatorElement, mapSettings, initialZoom) {
         this.maps = [];
         this.locationMarker = new google.maps.Marker({
             icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
@@ -122,7 +122,7 @@ var DistanceComparator = (function() {
         this.isBoundsUpdateInProgress = false;
         var self = this;
         mapSettings.forEach(function(mapSetting, i) {
-            var map = new MapView(mapSetting, initialZoom);
+            var map = new MapView(comparatorElement, mapSetting, initialZoom);
             map.delegate = self;
             map.tag = i;
             self.maps.push(map);
