@@ -43,6 +43,10 @@ var DistanceComparator = (function() {
             map: this.map,
             draggable: true
         });
+        var referencePointInputElement = this.createSearchBoxElement();
+        var referencePointSearchBox = new google.maps.places.SearchBox(referencePointInputElement);
+        this.map.controls[google.maps.ControlPosition.TOP_LEFT].push(referencePointInputElement);
+
         var self = this;
         google.maps.event.addDomListener(this.map, "bounds_changed", function() {
             self.delegate.mapDidMove(self);
@@ -55,6 +59,16 @@ var DistanceComparator = (function() {
             self.circle.setCenter(self.referencePoint);
             self.delegate.mapDidMove(self, /*didReferencePointMove =*/true);
         });
+        google.maps.event.addDomListener(referencePointSearchBox, "places_changed", function() {
+            //TODO(vsapsai): handle when there are no places.
+            var newReferencePoint = referencePointSearchBox.getPlaces()[0].geometry.location;
+            var centerOffset = self.getCenterOffset();
+            //TODO(vsapsai): update comparison point in some cases.
+            self.referencePoint = newReferencePoint;
+            marker.setPosition(self.referencePoint);
+            self.setCenterOffset(centerOffset);
+            self.circle.setCenter(self.referencePoint);
+        });
     };
 
     MapView.prototype.createMapElement = function() {
@@ -62,6 +76,14 @@ var DistanceComparator = (function() {
         mapElement.classList.add("map-placeholder");
         return mapElement;
     };
+
+    MapView.prototype.createSearchBoxElement = function() {
+        var inputElement = document.createElement("input");
+        inputElement.setAttribute("type", "text");
+        inputElement.setAttribute("placeholder", "Reference Point");
+        inputElement.classList.add("search-box");
+        return inputElement;
+    }
 
     MapView.prototype.getMap = function() {
         return this.map;

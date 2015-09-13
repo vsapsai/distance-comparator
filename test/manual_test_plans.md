@@ -16,3 +16,8 @@
 2. Double click on the left map.
 3. Drag the reference point on the left map to the center => circle on the left map has center at the reference point ang goes through comparison point, circle on the right map has the same radius as on the left.
 4. Drag the reference point on the right map => circles' radius should stay the same.
+
+## Can search for a reference point by text.
+1. Search for a real location in the left map search box and select it => map and reference point marker on the left are moved to selected location.
+2. Move a map so that reference point in the lower left corner.
+3. Search for a real location in the right map search box ad select it => reference point marker on the right is still in the lower left corner.

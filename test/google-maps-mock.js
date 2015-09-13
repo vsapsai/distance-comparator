@@ -1,10 +1,14 @@
 // Empty namespace-like structure.
 var google = {
     maps: {
+        ControlPosition: {
+            TOP_LEFT: "TOP_LEFT"
+        },
         event: {},
         geometry: {
             spherical: {}
-        }
+        },
+        places: {}
     }
 };
 
