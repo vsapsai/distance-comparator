@@ -43,16 +43,19 @@ var DistanceComparator = (function() {
             map: this.map,
             draggable: true
         });
-        var referencePointInputElement = this.createSearchBoxElement();
+        var referencePointInputElement = this.createSearchBoxElement("Reference Point");
         var referencePointSearchBox = new google.maps.places.SearchBox(referencePointInputElement);
         this.map.controls[google.maps.ControlPosition.TOP_LEFT].push(referencePointInputElement);
+        var comparisonPointInputElement = this.createSearchBoxElement("Comparison Point");
+        var comparisonPointSearchBox = new google.maps.places.SearchBox(comparisonPointInputElement);
+        this.map.controls[google.maps.ControlPosition.TOP_LEFT].push(comparisonPointInputElement);
 
         var self = this;
         google.maps.event.addDomListener(this.map, "bounds_changed", function() {
             self.delegate.mapDidMove(self);
         });
         google.maps.event.addDomListener(this.map, "dblclick", function(event) {
-            self.delegate.mapDidDoubleClick(self, event);
+            self.delegate.mapDidSelectComparisonPoint(self, event.latLng);
         });
         google.maps.event.addDomListener(marker, "dragend", function() {
             self.referencePoint = marker.getPosition();
@@ -69,6 +72,11 @@ var DistanceComparator = (function() {
             self.setCenterOffset(centerOffset);
             self.circle.setCenter(self.referencePoint);
         });
+        google.maps.event.addDomListener(comparisonPointSearchBox, "places_changed", function() {
+            //TODO(vsapsai): handle when there are no places.
+            var placePosition = comparisonPointSearchBox.getPlaces()[0].geometry.location;
+            self.delegate.mapDidSelectComparisonPoint(self, placePosition);
+        });
     };
 
     MapView.prototype.createMapElement = function() {
@@ -77,10 +85,10 @@ var DistanceComparator = (function() {
         return mapElement;
     };
 
-    MapView.prototype.createSearchBoxElement = function() {
+    MapView.prototype.createSearchBoxElement = function(placeholderText) {
         var inputElement = document.createElement("input");
         inputElement.setAttribute("type", "text");
-        inputElement.setAttribute("placeholder", "Reference Point");
+        inputElement.setAttribute("placeholder", placeholderText);
         inputElement.classList.add("search-box");
         return inputElement;
     }
@@ -165,9 +173,9 @@ var DistanceComparator = (function() {
         }
     };
 
-    DistanceComparator.prototype.mapDidDoubleClick = function(mapView, event) {
+    DistanceComparator.prototype.mapDidSelectComparisonPoint = function(mapView, position) {
         this.locationMarker.setMap(mapView.getMap());
-        this.locationMarker.setPosition(event.latLng);
+        this.locationMarker.setPosition(position);
         this.syncCircleRadiusWithMap(mapView);
     };
 

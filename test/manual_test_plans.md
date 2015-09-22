@@ -18,6 +18,10 @@
 4. Drag the reference point on the right map => circles' radius should stay the same.
 
 ## Can search for a reference point by text.
-1. Search for a real location in the left map search box and select it => map and reference point marker on the left are moved to selected location.
+1. Search for a real location in the left map reference point search box and select it => map and reference point marker on the left are moved to selected location.
 2. Move a map so that reference point in the lower left corner.
-3. Search for a real location in the right map search box ad select it => reference point marker on the right is still in the lower left corner.
+3. Search for a real location in the right map reference point search box and select it => reference point marker on the right is still in the lower left corner.
+
+## Can search for a comparison point by text.
+1. Search for a real location in the left map comparison point search box and select it => the comparison marker should be put on selected location, circles should be drawn.
+2. Search for a real location in the right map comparison point search box and select it => the comparison marker should be shown on the right map in correct location, circles should update radii.

@@ -30,6 +30,14 @@ describe("DistanceComparator", function() {
         google.maps.event.addDomListener = jasmine.createSpy("addDomListener");
     }
 
+    function mockPlace(lat, lng) {
+        var mockPlace = {
+            geometry: {}
+        };
+        mockPlace.geometry.location = new google.maps.LatLng(lat, lng);
+        return mockPlace;
+    }
+
     function getEventHandler(instance, eventName) {
         var calls = google.maps.event.addDomListener.calls;
         var i;
@@ -111,23 +119,39 @@ describe("DistanceComparator", function() {
             expect(circle1CreationConfig.clickable).toEqual(false);
         });
 
-        it("creates reference point search boxes", function() {
+        it("creates reference point and comparison point search boxes", function() {
             var comparator = createDistanceComparator();
-            expect(searchBoxes.length).toEqual(2);
+            expect(searchBoxes.length).toEqual(4);
             var mapControls = google.maps.Map.prototype.controls[google.maps.ControlPosition.TOP_LEFT];
-            expect(mapControls.length).toEqual(2);
-            // Verify 1st search box.
+            expect(mapControls.length).toEqual(4);
+            // Verify 1st reference point search box.
             expect(searchBoxes[0].__constructor__.calls.count()).toEqual(1);
             var searchBox0Element = searchBoxes[0].__constructor__.calls.argsFor(0)[0];
             expect(mapControls.indexOf(searchBox0Element)).not.toEqual(-1);
             expect(searchBox0Element.tagName).toEqual("INPUT");
             expect(searchBox0Element.getAttribute("type")).toEqual("text");
-            // Verify 2nd search box.
+            expect(searchBox0Element.getAttribute("placeholder")).toMatch(/reference/i);
+            // Verify 1st comparison point search box.
             expect(searchBoxes[1].__constructor__.calls.count()).toEqual(1);
             var searchBox1Element = searchBoxes[1].__constructor__.calls.argsFor(0)[0];
             expect(mapControls.indexOf(searchBox1Element)).not.toEqual(-1);
             expect(searchBox1Element.tagName).toEqual("INPUT");
             expect(searchBox1Element.getAttribute("type")).toEqual("text");
+            expect(searchBox1Element.getAttribute("placeholder")).toMatch(/comparison/i);
+            // Verify 2nd reference point search box.
+            expect(searchBoxes[2].__constructor__.calls.count()).toEqual(1);
+            var searchBox2Element = searchBoxes[2].__constructor__.calls.argsFor(0)[0];
+            expect(mapControls.indexOf(searchBox2Element)).not.toEqual(-1);
+            expect(searchBox2Element.tagName).toEqual("INPUT");
+            expect(searchBox2Element.getAttribute("type")).toEqual("text");
+            expect(searchBox2Element.getAttribute("placeholder")).toMatch(/reference/i);
+            // Verify 2nd comparison point search box.
+            expect(searchBoxes[3].__constructor__.calls.count()).toEqual(1);
+            var searchBox3Element = searchBoxes[3].__constructor__.calls.argsFor(0)[0];
+            expect(mapControls.indexOf(searchBox3Element)).not.toEqual(-1);
+            expect(searchBox3Element.tagName).toEqual("INPUT");
+            expect(searchBox3Element.getAttribute("type")).toEqual("text");
+            expect(searchBox3Element.getAttribute("placeholder")).toMatch(/comparison/i);
         });
     });
 
@@ -252,11 +276,7 @@ describe("DistanceComparator", function() {
             var comparator = createDistanceComparator();
             // Simulate the reference point is to the left and to the bottom relative to the map center.
             maps[0].getCenter.and.returnValue(new google.maps.LatLng(10, 20));
-            var stubPlace = {
-                geometry: {}
-            };
-            stubPlace.geometry.location = new google.maps.LatLng(200, 300);
-            searchBoxes[0].getPlaces.and.returnValue([stubPlace]);
+            searchBoxes[0].getPlaces.and.returnValue([mockPlace(200, 300)]);
 
             var searchBoxHandler = getEventHandler(searchBoxes[0].mockWrapper, "places_changed");
             expect(searchBoxHandler).toBeDefined();
@@ -269,11 +289,7 @@ describe("DistanceComparator", function() {
             var comparator = createDistanceComparator();
             // Simulate the reference point is to the left and to the bottom relative to the map center.
             maps[0].getCenter.and.returnValue(mapSettings[0].center);
-            var stubPlace = {
-                geometry: {}
-            };
-            stubPlace.geometry.location = new google.maps.LatLng(10, 20);
-            searchBoxes[0].getPlaces.and.returnValue([stubPlace]);
+            searchBoxes[0].getPlaces.and.returnValue([mockPlace(10, 20)]);
 
             var searchBoxHandler = getEventHandler(searchBoxes[0].mockWrapper, "places_changed");
             searchBoxHandler();
@@ -283,6 +299,45 @@ describe("DistanceComparator", function() {
             expect(circles[0].setCenter.calls.mostRecent().args[0].lat()).toEqual(10);
             expect(circles[0].setCenter.calls.mostRecent().args[0].lng()).toEqual(20);
             expect(circles[1].setCenter).not.toHaveBeenCalled();
+        });
+    });
+
+    describe("comparison point search", function() {
+        it("puts comparison location marker on place location", function() {
+            var comparator = createDistanceComparator();
+            searchBoxes[1].getPlaces.and.returnValue([mockPlace(23, 56)]);
+
+            var searchBoxHandler = getEventHandler(searchBoxes[1].mockWrapper, "places_changed");
+            expect(searchBoxHandler).toBeDefined();
+            searchBoxHandler();
+            expect(markers[0].setPosition.calls.mostRecent().args[0].lat()).toEqual(23);
+            expect(markers[0].setPosition.calls.mostRecent().args[0].lng()).toEqual(56);
+        });
+
+        it("moves comparison location marker to map where searched for comparison point", function() {
+            var comparator = createDistanceComparator();
+            searchBoxes[1].getPlaces.and.returnValue([mockPlace(23, 56)]);
+            searchBoxes[3].getPlaces.and.returnValue([mockPlace(23, 56)]);
+
+            var searchBoxHandler1 = getEventHandler(searchBoxes[1].mockWrapper, "places_changed");
+            searchBoxHandler1();
+            expect(markers[0].setMap).toHaveBeenCalledWith(maps[0].mockWrapper);
+            var searchBoxHandler2 = getEventHandler(searchBoxes[3].mockWrapper, "places_changed");
+            searchBoxHandler2();
+            expect(markers[0].setMap).toHaveBeenCalledWith(maps[1].mockWrapper);
+        });
+
+        it("shows circles with radius as distance from reference point to comparison point", function() {
+            var comparator = createDistanceComparator();
+            searchBoxes[3].getPlaces.and.returnValue([mockPlace(130, 140)]);
+
+            var searchBoxHandler = getEventHandler(searchBoxes[3].mockWrapper, "places_changed");
+            expect(searchBoxHandler).toBeDefined();
+            searchBoxHandler();
+            expect(circles[0].setRadius).toHaveBeenCalledWith(50);
+            expect(circles[0].setVisible).toHaveBeenCalledWith(true);
+            expect(circles[1].setRadius).toHaveBeenCalledWith(50);
+            expect(circles[1].setVisible).toHaveBeenCalledWith(true);
         });
     });
 });
