@@ -122,6 +122,12 @@ var DistanceComparator = (function() {
         this.circle.setVisible(true);
     };
 
+    MapView.prototype.getState = function() {
+        return {
+            referencePoint: this.referencePoint
+        };
+    };
+
     var DistanceComparator = function(comparatorElement, mapSettings, initialZoom) {
         this.maps = [];
         this.locationMarker = new google.maps.Marker({
@@ -177,6 +183,33 @@ var DistanceComparator = (function() {
         this.locationMarker.setMap(mapView.getMap());
         this.locationMarker.setPosition(position);
         this.syncCircleRadiusWithMap(mapView);
+    };
+
+    DistanceComparator.prototype.getState = function() {
+        // State contains:
+        // * zoom
+        // * center offset (if one of the maps has a reference point)
+        // * reference point or center for the 1st map
+        // * reference point or center for the 2nd map
+        // * comparison point if present
+        var state = {
+            zoom: this.maps[0].getZoom(),
+            centerOffset: this.maps[0].getCenterOffset()
+        };
+        state.maps = this.maps.map(function(mapView) {
+            return mapView.getState();
+        });
+        var i;
+        for (i = 0; i < this.maps.length; i++) {
+            if (this.locationMarker.getMap() === this.maps[i].getMap()) {
+                state.comparisonPoint = {
+                    mapIndex: i,
+                    position: this.locationMarker.getPosition()
+                };
+                break;
+            }
+        }
+        return state;
     };
 
     var exportObject = {};

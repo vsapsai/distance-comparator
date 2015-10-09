@@ -268,7 +268,7 @@ describe("DistanceComparator", function() {
     });
 
     describe("dragging comparison point", function() {
-
+        //TODO(vsapsai): add support
     });
 
     describe("reference point search", function() {
@@ -338,6 +338,71 @@ describe("DistanceComparator", function() {
             expect(circles[0].setVisible).toHaveBeenCalledWith(true);
             expect(circles[1].setRadius).toHaveBeenCalledWith(50);
             expect(circles[1].setVisible).toHaveBeenCalledWith(true);
+        });
+    });
+
+    describe("state", function() {
+        it("contains current zoom", function() {
+            var comparator = createDistanceComparator();
+            var currentZoom = 7;
+            maps[0].getZoom.and.returnValue(currentZoom);
+            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+
+            expect(comparator.getState().zoom).toEqual(currentZoom);
+        });
+
+        it("contains center offset when has a reference point", function() {
+            var comparator = createDistanceComparator();
+            maps[0].getCenter.and.returnValue(new google.maps.LatLng(10, 20));
+
+            var centerOffset = comparator.getState().centerOffset;
+            expect(centerOffset.latDiff).toEqual(10);
+            expect(centerOffset.lngDiff).toEqual(20);
+        });
+
+        //TODO(vsapsai): add when don't require reference points
+        it("does not contain center offset when has no reference points", function() {});
+
+        it("contains comparison point when present", function() {
+            var comparator = createDistanceComparator();
+            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+            var doubleClickHandler = getEventHandler(maps[1].mockWrapper, "dblclick");
+            doubleClickHandler({latLng: new google.maps.LatLng(23, 56)});
+
+            var comparisonPoint = comparator.getState().comparisonPoint;
+            expect(comparisonPoint.mapIndex).toEqual(1);
+            expect(comparisonPoint.position.lat()).toEqual(23);
+            expect(comparisonPoint.position.lng()).toEqual(56);
+        });
+
+        it("does not contain comparison point when absent", function() {
+            var comparator = createDistanceComparator();
+            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+            expect(comparator.getState().comparisonPoint).toBeUndefined();
+        });
+
+        describe("map state", function() {
+            it("has state for all maps", function() {
+                var comparator = createDistanceComparator();
+                maps[0].getCenter.and.returnValue(mapSettings[0].center);
+                expect(comparator.getState().maps).toBeDefined();
+                expect(comparator.getState().maps.length).toEqual(2);
+            });
+
+            it("contains reference point when present", function() {
+                var comparator = createDistanceComparator();
+                maps[0].getCenter.and.returnValue(mapSettings[0].center);
+                var mapsState = comparator.getState().maps;
+                var i;
+                for (i = 0; i < mapsState.length; i++) {
+                    expect(mapsState[i].referencePoint).toBeDefined();
+                    expect(mapsState[i].referencePoint.lat()).toEqual(mapSettings[i].center.lat());
+                    expect(mapsState[i].referencePoint.lng()).toEqual(mapSettings[i].center.lng());
+                }
+            });
+
+            //TODO(vsapsai): add when don't require reference points
+            it("contains center position when reference point is absent", function() {});
         });
     });
 });
