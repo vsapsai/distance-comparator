@@ -406,3 +406,44 @@ describe("DistanceComparator", function() {
         });
     });
 });
+
+describe("state <-> string conversion", function() {
+    describe("encodeStateToString", function() {
+        it("encodes zoom", function() {
+            expect(DistanceComparator.encodeStateToString({zoom: 7})).toEqual("zoom=7");
+        });
+
+        it("encodes center offset", function() {
+            var offset = {latDiff: 0.1234567, lngDiff: -0.1234567};
+            expect(DistanceComparator.encodeStateToString({centerOffset: offset}))
+                .toEqual("offset=0.123457,-0.123457");
+        });
+
+        it("encodes comparison point", function() {
+            var comparisonPoint = {
+                mapIndex: 3,
+                position: new google.maps.LatLng(0.1234567, -0.1234567)
+            };
+            expect(DistanceComparator.encodeStateToString({comparisonPoint: comparisonPoint}))
+                .toEqual("comparison3=0.123457,-0.123457");
+        });
+
+        it("encodes maps' reference points", function() {
+            var mapState = {
+                referencePoint: new google.maps.LatLng(0.1234567, -0.1234567)
+            };
+            expect(DistanceComparator.encodeStateToString({maps: [mapState]}))
+                .toEqual("ref0=0.123457,-0.123457");
+        });
+
+        it("separates components with &", function() {
+            var offset = {latDiff: 0.1234567, lngDiff: -0.1234567};
+            var state = {
+                zoom: 5,
+                centerOffset: offset
+            };
+            expect(DistanceComparator.encodeStateToString(state))
+                .toEqual("zoom=5&offset=0.123457,-0.123457");
+        });
+    });
+});

@@ -15,6 +15,16 @@ var DistanceComparator = (function() {
         );
     }
 
+    function getUrlValueForLatLngDifference(latLngDiff) {
+        var precision = 6;
+        return latLngDiff.latDiff.toFixed(precision) + "," + latLngDiff.lngDiff.toFixed(precision);
+    }
+
+    function getUrlValueForLatLng(latLng) {
+        var precision = 6;
+        return latLng.lat().toFixed(precision) + "," + latLng.lng().toFixed(precision);
+    }
+
     /**
      * Represents a single map.
      */
@@ -212,7 +222,37 @@ var DistanceComparator = (function() {
         return state;
     };
 
+    function encodeStateToString(state) {
+        var components = [];
+        if (state.zoom) {
+            components.push("zoom=" + state.zoom);
+        }
+        if (state.centerOffset) {
+            components.push("offset=" + getUrlValueForLatLngDifference(state.centerOffset));
+        }
+        if (state.comparisonPoint) {
+            components.push("comparison" + state.comparisonPoint.mapIndex +
+                            "=" + getUrlValueForLatLng(state.comparisonPoint.position));
+        }
+        if (state.maps) {
+            var i;
+            for (i = 0; i < state.maps.length; i++) {
+                var mapState = state.maps[i];
+                if (mapState.referencePoint) {
+                    components.push("ref" + i + "=" + getUrlValueForLatLng(mapState.referencePoint));
+                }
+            }
+        }
+        return components.join("&");
+    }
+
+    function decodeStateFromString(string) {
+        //TODO(vsapsai): implement
+    }
+
     var exportObject = {};
     exportObject.DistanceComparator = DistanceComparator;
+    exportObject.encodeStateToString = encodeStateToString;
+    exportObject.decodeStateFromString = decodeStateFromString;
     return exportObject;
 })();
