@@ -67,10 +67,14 @@ var DistanceComparator = (function() {
         google.maps.event.addDomListener(this.map, "dblclick", function(event) {
             self.delegate.mapDidSelectComparisonPoint(self, event.latLng);
         });
+        google.maps.event.addDomListener(this.map, "idle", function() {
+            self.delegate.mapStateDidChange();
+        });
         google.maps.event.addDomListener(marker, "dragend", function() {
             self.referencePoint = marker.getPosition();
             self.circle.setCenter(self.referencePoint);
             self.delegate.mapDidMove(self, /*didReferencePointMove =*/true);
+            self.delegate.mapStateDidChange();
         });
         google.maps.event.addDomListener(referencePointSearchBox, "places_changed", function() {
             //TODO(vsapsai): handle when there are no places.
@@ -81,6 +85,7 @@ var DistanceComparator = (function() {
             marker.setPosition(self.referencePoint);
             self.setCenterOffset(centerOffset);
             self.circle.setCenter(self.referencePoint);
+            self.delegate.mapStateDidChange();
         });
         google.maps.event.addDomListener(comparisonPointSearchBox, "places_changed", function() {
             //TODO(vsapsai): handle when there are no places.
@@ -193,6 +198,19 @@ var DistanceComparator = (function() {
         this.locationMarker.setMap(mapView.getMap());
         this.locationMarker.setPosition(position);
         this.syncCircleRadiusWithMap(mapView);
+        this.notifyStateDidChange();
+    };
+
+    DistanceComparator.prototype.mapStateDidChange = function() {
+        this.notifyStateDidChange();
+    };
+
+    DistanceComparator.prototype.getStateChangeHandler = function() {
+        return this.stateChangeHandler;
+    };
+
+    DistanceComparator.prototype.setStateChangeHandler = function(handler) {
+        this.stateChangeHandler = handler;
     };
 
     DistanceComparator.prototype.getState = function() {
@@ -220,6 +238,13 @@ var DistanceComparator = (function() {
             }
         }
         return state;
+    };
+
+    DistanceComparator.prototype.notifyStateDidChange = function() {
+        var stateChangeHandler = this.getStateChangeHandler();
+        if (stateChangeHandler) {
+            stateChangeHandler(this.getState());
+        }
     };
 
     function encodeStateToString(state) {

@@ -156,14 +156,21 @@ describe("DistanceComparator", function() {
     });
 
     describe("movement and zoom", function() {
+        function invokeMovementEventHandlers(map) {
+            var boundsChangedHandler = getEventHandler(map.mockWrapper, "bounds_changed");
+            expect(boundsChangedHandler).toBeDefined();
+            boundsChangedHandler();
+            var idleHandler = getEventHandler(map.mockWrapper, "idle");
+            expect(idleHandler).toBeDefined();
+            idleHandler();
+        }
+
         it("synchronizes map movement", function() {
             var comparator = createDistanceComparator();
             // Mock movement by 10, 20.
             maps[0].getCenter.and.returnValue(new google.maps.LatLng(10, 20));
 
-            var boundsChangedHandler = getEventHandler(maps[0].mockWrapper, "bounds_changed");
-            expect(boundsChangedHandler).toBeDefined();
-            boundsChangedHandler();
+            invokeMovementEventHandlers(maps[0]);
             expect(maps[1].setCenter.calls.mostRecent().args[0].lat()).toEqual(110);
             expect(maps[1].setCenter.calls.mostRecent().args[0].lng()).toEqual(120);
         });
@@ -174,10 +181,18 @@ describe("DistanceComparator", function() {
             maps[1].getZoom.and.returnValue(newZoom);
             maps[1].getCenter.and.returnValue(mapSettings[1].center);
 
-            var boundsChangedHandler = getEventHandler(maps[1].mockWrapper, "bounds_changed");
-            expect(boundsChangedHandler).toBeDefined();
-            boundsChangedHandler();
+            invokeMovementEventHandlers(maps[1]);
             expect(maps[0].setZoom.calls.mostRecent().args[0]).toEqual(newZoom);
+        });
+
+        it("changes state", function() {
+            var comparator = createDistanceComparator();
+            var stateChangeHandler = jasmine.createSpy("stateChangeHandler");
+            comparator.setStateChangeHandler(stateChangeHandler);
+            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+
+            invokeMovementEventHandlers(maps[0]);
+            expect(stateChangeHandler).toHaveBeenCalled();
         });
     });
 
@@ -213,6 +228,17 @@ describe("DistanceComparator", function() {
             expect(circles[0].setVisible).toHaveBeenCalledWith(true);
             expect(circles[1].setRadius).toHaveBeenCalledWith(50);
             expect(circles[1].setVisible).toHaveBeenCalledWith(true);
+        });
+
+        it("changes state", function() {
+            var comparator = createDistanceComparator();
+            var stateChangeHandler = jasmine.createSpy("stateChangeHandler");
+            comparator.setStateChangeHandler(stateChangeHandler);
+            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+
+            var doubleClickHandler = getEventHandler(maps[1].mockWrapper, "dblclick");
+            doubleClickHandler({latLng: new google.maps.LatLng(130, 140)});
+            expect(stateChangeHandler).toHaveBeenCalled();
         });
     });
 
@@ -265,6 +291,18 @@ describe("DistanceComparator", function() {
             expect(circles[1].setRadius.calls.mostRecent().args[0]).toEqual(20);
             expect(circles[1].setCenter.calls.count()).toEqual(0);
         });
+
+        it("changes state", function() {
+            var comparator = createDistanceComparator();
+            var stateChangeHandler = jasmine.createSpy("stateChangeHandler");
+            comparator.setStateChangeHandler(stateChangeHandler);
+            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+            markers[1].getPosition.and.returnValue(new google.maps.LatLng(10, 20));
+
+            var dragHandler = getEventHandler(markers[1].mockWrapper, "dragend");
+            dragHandler();
+            expect(stateChangeHandler).toHaveBeenCalled();
+        });
     });
 
     describe("dragging comparison point", function() {
@@ -299,6 +337,18 @@ describe("DistanceComparator", function() {
             expect(circles[0].setCenter.calls.mostRecent().args[0].lat()).toEqual(10);
             expect(circles[0].setCenter.calls.mostRecent().args[0].lng()).toEqual(20);
             expect(circles[1].setCenter).not.toHaveBeenCalled();
+        });
+
+        it("changes state", function() {
+            var comparator = createDistanceComparator();
+            var stateChangeHandler = jasmine.createSpy("stateChangeHandler");
+            comparator.setStateChangeHandler(stateChangeHandler);
+            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+            searchBoxes[0].getPlaces.and.returnValue([mockPlace(200, 300)]);
+
+            var searchBoxHandler = getEventHandler(searchBoxes[0].mockWrapper, "places_changed");
+            searchBoxHandler();
+            expect(stateChangeHandler).toHaveBeenCalled();
         });
     });
 
@@ -338,6 +388,18 @@ describe("DistanceComparator", function() {
             expect(circles[0].setVisible).toHaveBeenCalledWith(true);
             expect(circles[1].setRadius).toHaveBeenCalledWith(50);
             expect(circles[1].setVisible).toHaveBeenCalledWith(true);
+        });
+
+        it("changes state", function() {
+            var comparator = createDistanceComparator();
+            var stateChangeHandler = jasmine.createSpy("stateChangeHandler");
+            comparator.setStateChangeHandler(stateChangeHandler);
+            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+            searchBoxes[3].getPlaces.and.returnValue([mockPlace(130, 140)]);
+
+            var searchBoxHandler = getEventHandler(searchBoxes[3].mockWrapper, "places_changed");
+            searchBoxHandler();
+            expect(stateChangeHandler).toHaveBeenCalled();
         });
     });
 
