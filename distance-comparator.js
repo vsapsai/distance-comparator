@@ -29,18 +29,18 @@ var DistanceComparator = (function() {
      * Represents a single map.
      */
     var MapView = function(parentElement, mapConfig, zoom) {
-        this.referencePoint = mapConfig.center;
+        this.referencePoint = mapConfig.referencePoint;
 
         var mapElement = this.createMapElement();
         parentElement.appendChild(mapElement);
         this.map = new google.maps.Map(mapElement, {
             zoom: zoom,
-            center: mapConfig.center,
+            center: this.referencePoint,
             disableDoubleClickZoom: true  // We use double click for a different purpose.
         });
         this.circle = new google.maps.Circle({
             map: this.map,
-            center: mapConfig.center,
+            center: this.referencePoint,
             fillOpacity: 0.0,
             strokeColor: "#AAA",
             strokeOpacity: 1.0,
@@ -49,7 +49,7 @@ var DistanceComparator = (function() {
             clickable: false
         });
         var marker = new google.maps.Marker({
-            position: mapConfig.center,
+            position: this.referencePoint,
             map: this.map,
             draggable: true
         });
@@ -143,15 +143,15 @@ var DistanceComparator = (function() {
         };
     };
 
-    var DistanceComparator = function(comparatorElement, mapSettings, initialZoom) {
+    var DistanceComparator = function(comparatorElement, mapSettings) {
         this.maps = [];
         this.locationMarker = new google.maps.Marker({
             icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
         });
         this.isBoundsUpdateInProgress = false;
         var self = this;
-        mapSettings.forEach(function(mapSetting, i) {
-            var map = new MapView(comparatorElement, mapSetting, initialZoom);
+        mapSettings.maps.forEach(function(mapSetting, i) {
+            var map = new MapView(comparatorElement, mapSetting, mapSettings.zoom);
             map.delegate = self;
             map.tag = i;
             self.maps.push(map);

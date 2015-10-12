@@ -43,17 +43,19 @@
     <script src="distance-comparator.js"></script>
     <script>
 function initialize() {
-  var initialZoom = 10;
-  var mapSettings = [
-    {
-      center: new google.maps.LatLng(49.2815995, -123.1213593)
-    },
-    {
-      center: new google.maps.LatLng(50.4020355, 30.5326905)
-    }
-  ];
+  var mapSettings = {
+    zoom: 10,
+    maps: [
+      {
+        referencePoint: new google.maps.LatLng(49.2815995, -123.1213593)
+      },
+      {
+        referencePoint: new google.maps.LatLng(50.4020355, 30.5326905)
+      }
+    ]
+  };
   var comparator = new DistanceComparator.DistanceComparator(
-      document.getElementById("map-canvas"), mapSettings, initialZoom);
+      document.getElementById("map-canvas"), mapSettings);
 }
 
 google.maps.event.addDomListener(window, 'load', initialize);

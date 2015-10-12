@@ -6,15 +6,17 @@ describe("DistanceComparator", function() {
     var circles;
     var searchBoxes;
     var root = document.createElement("div");
-    var mapSettings = [
-        {
-            center: new google.maps.LatLng(0, 0)
-        },
-        {
-            center: new google.maps.LatLng(100, 100)
-        }
-    ];
-    var zoom = 10;
+    var mapSettings = {
+        zoom: 10,
+        maps: [
+            {
+                referencePoint: new google.maps.LatLng(0, 0)
+            },
+            {
+                referencePoint: new google.maps.LatLng(100, 100)
+            }
+        ]
+    }
 
     function mockGoogleMaps() {
         maps = [];
@@ -51,7 +53,7 @@ describe("DistanceComparator", function() {
     }
 
     function createDistanceComparator() {
-        return new DistanceComparator.DistanceComparator(root, mapSettings, zoom);
+        return new DistanceComparator.DistanceComparator(root, mapSettings);
     }
 
     beforeEach(mockGoogleMaps);
@@ -69,16 +71,16 @@ describe("DistanceComparator", function() {
             expect(root.contains(maps[0].__constructor__.calls.argsFor(0)[0])).toBe(true);
             expect(maps[0].__constructor__.calls.argsFor(0)[0].classList.contains("map-placeholder")).toBe(true);
             var map0CreationConfig = maps[0].__constructor__.calls.argsFor(0)[1];
-            expect(map0CreationConfig.center).toEqual(mapSettings[0].center);
-            expect(map0CreationConfig.zoom).toEqual(zoom);
+            expect(map0CreationConfig.center).toEqual(mapSettings.maps[0].referencePoint);
+            expect(map0CreationConfig.zoom).toEqual(mapSettings.zoom);
             expect(map0CreationConfig.disableDoubleClickZoom).toBeTruthy();
             // Verify 2nd map.
             expect(maps[1].__constructor__.calls.count()).toEqual(1);
             expect(root.contains(maps[1].__constructor__.calls.argsFor(0)[0])).toBe(true);
             expect(maps[1].__constructor__.calls.argsFor(0)[0].classList.contains("map-placeholder")).toBe(true);
             var map1CreationConfig = maps[1].__constructor__.calls.argsFor(0)[1];
-            expect(map1CreationConfig.center).toEqual(mapSettings[1].center);
-            expect(map1CreationConfig.zoom).toEqual(zoom);
+            expect(map1CreationConfig.center).toEqual(mapSettings.maps[1].referencePoint);
+            expect(map1CreationConfig.zoom).toEqual(mapSettings.zoom);
             expect(map1CreationConfig.disableDoubleClickZoom).toBeTruthy();
         });
 
@@ -91,12 +93,12 @@ describe("DistanceComparator", function() {
             // Verify 1st reference point marker.
             expect(markers[1].__constructor__.calls.count()).toEqual(1);
             var marker1CreationConfig = markers[1].__constructor__.calls.argsFor(0)[0];
-            expect(marker1CreationConfig.position).toEqual(mapSettings[0].center);
+            expect(marker1CreationConfig.position).toEqual(mapSettings.maps[0].referencePoint);
             expect(marker1CreationConfig.map).toEqual(maps[0].mockWrapper);
             // Verify 2nd reference point marker.
             expect(markers[2].__constructor__.calls.count()).toEqual(1);
             var marker2CreationConfig = markers[2].__constructor__.calls.argsFor(0)[0];
-            expect(marker2CreationConfig.position).toEqual(mapSettings[1].center);
+            expect(marker2CreationConfig.position).toEqual(mapSettings.maps[1].referencePoint);
             expect(marker2CreationConfig.map).toEqual(maps[1].mockWrapper);
         });
 
@@ -106,14 +108,14 @@ describe("DistanceComparator", function() {
             // Verify 1st circle.
             expect(circles[0].__constructor__.calls.count()).toEqual(1);
             var circle0CreationConfig = circles[0].__constructor__.calls.argsFor(0)[0];
-            expect(circle0CreationConfig.center).toEqual(mapSettings[0].center);
+            expect(circle0CreationConfig.center).toEqual(mapSettings.maps[0].referencePoint);
             expect(circle0CreationConfig.map).toEqual(maps[0].mockWrapper);
             expect(circle0CreationConfig.visible).toBeFalsy();
             expect(circle0CreationConfig.clickable).toEqual(false);
             // Verify 2nd circle.
             expect(circles[1].__constructor__.calls.count()).toEqual(1);
             var circle1CreationConfig = circles[1].__constructor__.calls.argsFor(0)[0];
-            expect(circle1CreationConfig.center).toEqual(mapSettings[1].center);
+            expect(circle1CreationConfig.center).toEqual(mapSettings.maps[1].referencePoint);
             expect(circle1CreationConfig.map).toEqual(maps[1].mockWrapper);
             expect(circle1CreationConfig.visible).toBeFalsy();
             expect(circle1CreationConfig.clickable).toEqual(false);
@@ -179,7 +181,7 @@ describe("DistanceComparator", function() {
             var comparator = createDistanceComparator();
             var newZoom = 42;
             maps[1].getZoom.and.returnValue(newZoom);
-            maps[1].getCenter.and.returnValue(mapSettings[1].center);
+            maps[1].getCenter.and.returnValue(mapSettings.maps[1].referencePoint);
 
             invokeMovementEventHandlers(maps[1]);
             expect(maps[0].setZoom.calls.mostRecent().args[0]).toEqual(newZoom);
@@ -189,7 +191,7 @@ describe("DistanceComparator", function() {
             var comparator = createDistanceComparator();
             var stateChangeHandler = jasmine.createSpy("stateChangeHandler");
             comparator.setStateChangeHandler(stateChangeHandler);
-            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+            maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint);
 
             invokeMovementEventHandlers(maps[0]);
             expect(stateChangeHandler).toHaveBeenCalled();
@@ -234,7 +236,7 @@ describe("DistanceComparator", function() {
             var comparator = createDistanceComparator();
             var stateChangeHandler = jasmine.createSpy("stateChangeHandler");
             comparator.setStateChangeHandler(stateChangeHandler);
-            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+            maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint);
 
             var doubleClickHandler = getEventHandler(maps[1].mockWrapper, "dblclick");
             doubleClickHandler({latLng: new google.maps.LatLng(130, 140)});
@@ -247,7 +249,7 @@ describe("DistanceComparator", function() {
             var comparator = createDistanceComparator();
             // Simulate dragging reference point by 10, 20 which requires moving
             // another map by the same distance in opposite direction.
-            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+            maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint);
             markers[1].getPosition.and.returnValue(new google.maps.LatLng(10, 20));
 
             var dragHandler = getEventHandler(markers[1].mockWrapper, "dragend");
@@ -260,7 +262,7 @@ describe("DistanceComparator", function() {
 
         it("updates circle center on the same map", function() {
             var comparator = createDistanceComparator();
-            maps[1].getCenter.and.returnValue(mapSettings[1].center);
+            maps[1].getCenter.and.returnValue(mapSettings.maps[1].referencePoint);
             markers[2].getPosition.and.returnValue(new google.maps.LatLng(120, 110));
 
             var dragHandler = getEventHandler(markers[2].mockWrapper, "dragend");
@@ -279,7 +281,7 @@ describe("DistanceComparator", function() {
             //markers[0].getPosition
             doubleClickHandler({latLng: comparisonPoint});
             // Simulate dragging reference point.
-            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+            maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint);
             markers[1].getPosition.and.returnValue(new google.maps.LatLng(10, 20));
             var dragHandler = getEventHandler(markers[1].mockWrapper, "dragend");
             dragHandler();
@@ -296,7 +298,7 @@ describe("DistanceComparator", function() {
             var comparator = createDistanceComparator();
             var stateChangeHandler = jasmine.createSpy("stateChangeHandler");
             comparator.setStateChangeHandler(stateChangeHandler);
-            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+            maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint);
             markers[1].getPosition.and.returnValue(new google.maps.LatLng(10, 20));
 
             var dragHandler = getEventHandler(markers[1].mockWrapper, "dragend");
@@ -326,7 +328,7 @@ describe("DistanceComparator", function() {
         it("updates reference point marker and circle", function() {
             var comparator = createDistanceComparator();
             // Simulate the reference point is to the left and to the bottom relative to the map center.
-            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+            maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint);
             searchBoxes[0].getPlaces.and.returnValue([mockPlace(10, 20)]);
 
             var searchBoxHandler = getEventHandler(searchBoxes[0].mockWrapper, "places_changed");
@@ -343,7 +345,7 @@ describe("DistanceComparator", function() {
             var comparator = createDistanceComparator();
             var stateChangeHandler = jasmine.createSpy("stateChangeHandler");
             comparator.setStateChangeHandler(stateChangeHandler);
-            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+            maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint);
             searchBoxes[0].getPlaces.and.returnValue([mockPlace(200, 300)]);
 
             var searchBoxHandler = getEventHandler(searchBoxes[0].mockWrapper, "places_changed");
@@ -394,7 +396,7 @@ describe("DistanceComparator", function() {
             var comparator = createDistanceComparator();
             var stateChangeHandler = jasmine.createSpy("stateChangeHandler");
             comparator.setStateChangeHandler(stateChangeHandler);
-            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+            maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint);
             searchBoxes[3].getPlaces.and.returnValue([mockPlace(130, 140)]);
 
             var searchBoxHandler = getEventHandler(searchBoxes[3].mockWrapper, "places_changed");
@@ -408,7 +410,7 @@ describe("DistanceComparator", function() {
             var comparator = createDistanceComparator();
             var currentZoom = 7;
             maps[0].getZoom.and.returnValue(currentZoom);
-            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+            maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint);
 
             expect(comparator.getState().zoom).toEqual(currentZoom);
         });
@@ -427,7 +429,7 @@ describe("DistanceComparator", function() {
 
         it("contains comparison point when present", function() {
             var comparator = createDistanceComparator();
-            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+            maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint);
             var doubleClickHandler = getEventHandler(maps[1].mockWrapper, "dblclick");
             doubleClickHandler({latLng: new google.maps.LatLng(23, 56)});
 
@@ -439,27 +441,27 @@ describe("DistanceComparator", function() {
 
         it("does not contain comparison point when absent", function() {
             var comparator = createDistanceComparator();
-            maps[0].getCenter.and.returnValue(mapSettings[0].center);
+            maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint);
             expect(comparator.getState().comparisonPoint).toBeUndefined();
         });
 
         describe("map state", function() {
             it("has state for all maps", function() {
                 var comparator = createDistanceComparator();
-                maps[0].getCenter.and.returnValue(mapSettings[0].center);
+                maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint);
                 expect(comparator.getState().maps).toBeDefined();
                 expect(comparator.getState().maps.length).toEqual(2);
             });
 
             it("contains reference point when present", function() {
                 var comparator = createDistanceComparator();
-                maps[0].getCenter.and.returnValue(mapSettings[0].center);
+                maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint);
                 var mapsState = comparator.getState().maps;
                 var i;
                 for (i = 0; i < mapsState.length; i++) {
                     expect(mapsState[i].referencePoint).toBeDefined();
-                    expect(mapsState[i].referencePoint.lat()).toEqual(mapSettings[i].center.lat());
-                    expect(mapsState[i].referencePoint.lng()).toEqual(mapSettings[i].center.lng());
+                    expect(mapsState[i].referencePoint.lat()).toEqual(mapSettings.maps[i].referencePoint.lat());
+                    expect(mapsState[i].referencePoint.lng()).toEqual(mapSettings.maps[i].referencePoint.lng());
                 }
             });
 
