@@ -95,11 +95,13 @@ describe("DistanceComparator", function() {
             var marker1CreationConfig = markers[1].__constructor__.calls.argsFor(0)[0];
             expect(marker1CreationConfig.position).toEqual(mapSettings.maps[0].referencePoint);
             expect(marker1CreationConfig.map).toEqual(maps[0].mockWrapper);
+            expect(marker1CreationConfig.visible).toBeTruthy();
             // Verify 2nd reference point marker.
             expect(markers[2].__constructor__.calls.count()).toEqual(1);
             var marker2CreationConfig = markers[2].__constructor__.calls.argsFor(0)[0];
             expect(marker2CreationConfig.position).toEqual(mapSettings.maps[1].referencePoint);
             expect(marker2CreationConfig.map).toEqual(maps[1].mockWrapper);
+            expect(marker2CreationConfig.visible).toBeTruthy();
         });
 
         it("creates invisible circles for later", function() {
@@ -156,22 +158,46 @@ describe("DistanceComparator", function() {
             expect(searchBox3Element.getAttribute("placeholder")).toMatch(/comparison/i);
         });
 
-        it("does not require setting to create default maps", function() {
-            var comparator = new DistanceComparator.DistanceComparator(root);
-            expect(comparator).not.toBeNull();
-            expect(maps.length).toEqual(2);
-            // Expect to provide zoom and center because these values are required.
-            // Verify 1st map.
-            var map0CreationConfig = maps[0].__constructor__.calls.argsFor(0)[1];
-            expect(map0CreationConfig.center).toBeDefined();
-            expect(map0CreationConfig.zoom).toBeDefined();
-            // Verify 2nd map.
-            var map1CreationConfig = maps[1].__constructor__.calls.argsFor(0)[1];
-            expect(map1CreationConfig.center).toBeDefined();
-            expect(map1CreationConfig.zoom).toBeDefined();
+        describe("without settings", function() {
+            var comparator;
+            beforeEach(function() {
+                comparator = new DistanceComparator.DistanceComparator(root);
+            });
+
+            it("provides default values for map zoom and center as these values are required", function() {
+                expect(maps.length).toEqual(2);
+                // Verify 1st map.
+                var map0CreationConfig = maps[0].__constructor__.calls.argsFor(0)[1];
+                expect(map0CreationConfig.center).toBeDefined();
+                expect(map0CreationConfig.zoom).toBeDefined();
+                // Verify 2nd map.
+                var map1CreationConfig = maps[1].__constructor__.calls.argsFor(0)[1];
+                expect(map1CreationConfig.center).toBeDefined();
+                expect(map1CreationConfig.zoom).toBeDefined();
+            });
+
+            it("creates reference point markers invisible and without position", function() {
+                // Verify 1st reference point marker.
+                var marker1CreationConfig = markers[1].__constructor__.calls.argsFor(0)[0];
+                expect(marker1CreationConfig.position).toBeUndefined();
+                expect(marker1CreationConfig.visible).toBeFalsy();
+                // Verify 2nd reference point marker.
+                var marker2CreationConfig = markers[2].__constructor__.calls.argsFor(0)[0];
+                expect(marker2CreationConfig.position).toBeUndefined();
+                expect(marker2CreationConfig.visible).toBeFalsy();
+            });
+
+            it("creates circles without positions", function() {
+                // Verify 1st circle.
+                var circle0CreationConfig = circles[0].__constructor__.calls.argsFor(0)[0];
+                expect(circle0CreationConfig.center).toBeUndefined();
+                // Verify 2nd circle.
+                var circle1CreationConfig = circles[1].__constructor__.calls.argsFor(0)[0];
+                expect(circle1CreationConfig.center).toBeUndefined();
+            });
         });
 
-        it("creates only 2 maps", function() {
+        it("creates only 2 maps regardless of number of map settings", function() {
             var mapConfigs = [
                 {
                     referencePoint: new google.maps.LatLng(0, 0)

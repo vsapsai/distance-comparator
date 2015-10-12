@@ -32,13 +32,14 @@ var DistanceComparator = (function() {
      * Represents a single map.
      */
     var MapView = function(parentElement, mapConfig, zoom) {
-        this.referencePoint = mapConfig.referencePoint || DEFAULT_PLACE;
+        this.referencePoint = mapConfig.referencePoint;
+        var mapCenter = this.referencePoint || DEFAULT_PLACE;
 
         var mapElement = this.createMapElement();
         parentElement.appendChild(mapElement);
         this.map = new google.maps.Map(mapElement, {
             zoom: zoom,
-            center: this.referencePoint,
+            center: mapCenter,
             disableDoubleClickZoom: true  // We use double click for a different purpose.
         });
         this.circle = new google.maps.Circle({
@@ -51,11 +52,16 @@ var DistanceComparator = (function() {
             visible: false,
             clickable: false
         });
-        var marker = new google.maps.Marker({
-            position: this.referencePoint,
+        var markerConfig = {
             map: this.map,
+            visible: false,
             draggable: true
-        });
+        };
+        if (this.referencePoint) {
+            markerConfig.position = this.referencePoint;
+            markerConfig.visible = true;
+        }
+        var marker = new google.maps.Marker(markerConfig);
         var referencePointInputElement = this.createSearchBoxElement("Reference Point");
         var referencePointSearchBox = new google.maps.places.SearchBox(referencePointInputElement);
         this.map.controls[google.maps.ControlPosition.TOP_LEFT].push(referencePointInputElement);
