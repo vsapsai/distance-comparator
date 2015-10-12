@@ -250,6 +250,31 @@ describe("DistanceComparator", function() {
             expect(maps[0].setZoom.calls.mostRecent().args[0]).toEqual(newZoom);
         });
 
+        it("moves maps without reference points independently", function() {
+            var comparator = new DistanceComparator.DistanceComparator(root, {maps: [{
+                referencePoint: new google.maps.LatLng(0, 0)
+            }]});
+
+            // Mock moving the 1st map.
+            maps[0].getCenter.and.returnValue(new google.maps.LatLng(10, 20));
+            invokeMovementEventHandlers(maps[0]);
+            expect(maps[1].setCenter).not.toHaveBeenCalled();
+            // Mock moving the 2nd map.
+            maps[1].getCenter.and.returnValue(new google.maps.LatLng(100, 500));
+            invokeMovementEventHandlers(maps[1]);
+            expect(maps[0].setCenter).not.toHaveBeenCalled();
+        });
+
+        it("synchronizes map zoom regardless of reference points", function() {
+            var comparator = new DistanceComparator.DistanceComparator(root);
+            var newZoom = 42;
+            maps[1].getZoom.and.returnValue(newZoom);
+            maps[1].getCenter.and.returnValue(mapSettings.maps[1].referencePoint);
+
+            invokeMovementEventHandlers(maps[1]);
+            expect(maps[0].setZoom.calls.mostRecent().args[0]).toEqual(newZoom);
+        });
+
         it("changes state", function() {
             var comparator = createDistanceComparator();
             var stateChangeHandler = jasmine.createSpy("stateChangeHandler");

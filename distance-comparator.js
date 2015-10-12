@@ -130,11 +130,17 @@ var DistanceComparator = (function() {
     };
 
     MapView.prototype.getCenterOffset = function() {
-        return getLatLngDifference(this.referencePoint, this.map.getCenter());
+        var result = undefined;
+        if (this.referencePoint) {
+            result = getLatLngDifference(this.referencePoint, this.map.getCenter());
+        }
+        return result;
     };
 
     MapView.prototype.setCenterOffset = function(offset) {
-        this.map.setCenter(latLngByApplyingDifference(this.referencePoint, offset));
+        if (this.referencePoint && offset) {
+            this.map.setCenter(latLngByApplyingDifference(this.referencePoint, offset));
+        }
     };
 
     MapView.prototype.getDistanceToReferencePoint = function(point) {
