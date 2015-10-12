@@ -1,6 +1,9 @@
 var DistanceComparator = (function() {
     "use strict";
 
+    var DEFAULT_ZOOM = 10;
+    var DEFAULT_PLACE = new google.maps.LatLng(50.45, 30.523611);
+
     function getLatLngDifference(latLng1, latLng2) {
         return {
             "latDiff": latLng2.lat() - latLng1.lat(),
@@ -29,7 +32,7 @@ var DistanceComparator = (function() {
      * Represents a single map.
      */
     var MapView = function(parentElement, mapConfig, zoom) {
-        this.referencePoint = mapConfig.referencePoint;
+        this.referencePoint = mapConfig.referencePoint || DEFAULT_PLACE;
 
         var mapElement = this.createMapElement();
         parentElement.appendChild(mapElement);
@@ -149,13 +152,18 @@ var DistanceComparator = (function() {
             icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
         });
         this.isBoundsUpdateInProgress = false;
-        var self = this;
-        mapSettings.maps.forEach(function(mapSetting, i) {
-            var map = new MapView(comparatorElement, mapSetting, mapSettings.zoom);
-            map.delegate = self;
+        var zoom = (mapSettings && mapSettings.zoom) || DEFAULT_ZOOM;
+        var i;
+        for (i = 0; i < 2; i++) {
+            var mapConfig = {};
+            if (mapSettings && mapSettings.maps && mapSettings.maps[i]) {
+                mapConfig = mapSettings.maps[i];
+            }
+            var map = new MapView(comparatorElement, mapConfig, zoom);
+            map.delegate = this;
             map.tag = i;
-            self.maps.push(map);
-        });
+            this.maps.push(map);
+        }
     };
 
     DistanceComparator.prototype.syncBoundsWithMap = function(mapIndex) {

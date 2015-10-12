@@ -16,7 +16,7 @@ describe("DistanceComparator", function() {
                 referencePoint: new google.maps.LatLng(100, 100)
             }
         ]
-    }
+    };
 
     function mockGoogleMaps() {
         maps = [];
@@ -154,6 +154,43 @@ describe("DistanceComparator", function() {
             expect(searchBox3Element.tagName).toEqual("INPUT");
             expect(searchBox3Element.getAttribute("type")).toEqual("text");
             expect(searchBox3Element.getAttribute("placeholder")).toMatch(/comparison/i);
+        });
+
+        it("does not require setting to create default maps", function() {
+            var comparator = new DistanceComparator.DistanceComparator(root);
+            expect(comparator).not.toBeNull();
+            expect(maps.length).toEqual(2);
+            // Expect to provide zoom and center because these values are required.
+            // Verify 1st map.
+            var map0CreationConfig = maps[0].__constructor__.calls.argsFor(0)[1];
+            expect(map0CreationConfig.center).toBeDefined();
+            expect(map0CreationConfig.zoom).toBeDefined();
+            // Verify 2nd map.
+            var map1CreationConfig = maps[1].__constructor__.calls.argsFor(0)[1];
+            expect(map1CreationConfig.center).toBeDefined();
+            expect(map1CreationConfig.zoom).toBeDefined();
+        });
+
+        it("creates only 2 maps", function() {
+            var mapConfigs = [
+                {
+                    referencePoint: new google.maps.LatLng(0, 0)
+                },
+                {
+                    referencePoint: new google.maps.LatLng(10, 10)
+                },
+                {
+                    referencePoint: new google.maps.LatLng(20, 20)
+                }
+            ];
+            var comparator = new DistanceComparator.DistanceComparator(root, {maps: mapConfigs});
+            expect(maps.length).toEqual(2);
+            // Verify 1st map.
+            var map0CreationConfig = maps[0].__constructor__.calls.argsFor(0)[1];
+            expect(map0CreationConfig.center).toEqual(mapConfigs[0].referencePoint);
+            // Verify 2nd map.
+            var map1CreationConfig = maps[1].__constructor__.calls.argsFor(0)[1];
+            expect(map1CreationConfig.center).toEqual(mapConfigs[1].referencePoint);
         });
     });
 
