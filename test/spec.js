@@ -400,27 +400,44 @@ describe("DistanceComparator", function() {
     });
 
     describe("reference point search", function() {
-        it("moves map to reflect new reference point", function() {
-            var comparator = createDistanceComparator();
-            // Simulate the reference point is to the left and to the bottom relative to the map center.
-            maps[0].getCenter.and.returnValue(new google.maps.LatLng(10, 20));
-            searchBoxes[0].getPlaces.and.returnValue([mockPlace(200, 300)]);
+        describe("moves map to reflect new reference point", function() {
+            it("both maps have reference points", function() {
+                var comparator = createDistanceComparator();
+                // Simulate the reference point is to the left and to the bottom relative to the map center.
+                maps[0].getCenter.and.returnValue(new google.maps.LatLng(10, 20));
+                searchBoxes[0].getPlaces.and.returnValue([mockPlace(200, 300)]);
 
-            var searchBoxHandler = getEventHandler(searchBoxes[0].mockWrapper, "places_changed");
-            expect(searchBoxHandler).toBeDefined();
-            searchBoxHandler();
-            expect(maps[0].setCenter.calls.mostRecent().args[0].lat()).toEqual(210);
-            expect(maps[0].setCenter.calls.mostRecent().args[0].lng()).toEqual(320);
-        });
+                var searchBoxHandler = getEventHandler(searchBoxes[0].mockWrapper, "places_changed");
+                expect(searchBoxHandler).toBeDefined();
+                searchBoxHandler();
+                expect(maps[0].setCenter.calls.mostRecent().args[0].lat()).toEqual(210);
+                expect(maps[0].setCenter.calls.mostRecent().args[0].lng()).toEqual(320);
+            });
 
-        it("centers map on the new reference point if there was none before", function() {
-            var comparator = new DistanceComparator.DistanceComparator(root);
-            searchBoxes[0].getPlaces.and.returnValue([mockPlace(10, 20)]);
+            it("another map has a reference point", function() {
+                var comparator = new DistanceComparator.DistanceComparator(root, {maps: [
+                    {},
+                    {referencePoint: mapSettings.maps[1].referencePoint}
+                ]});
+                // Simulate the reference point is to the left and to the bottom relative to the map center.
+                maps[1].getCenter.and.returnValue(new google.maps.LatLng(110, 120));
+                searchBoxes[0].getPlaces.and.returnValue([mockPlace(50, 60)]);
 
-            var searchBoxHandler = getEventHandler(searchBoxes[0].mockWrapper, "places_changed");
-            searchBoxHandler();
-            expect(maps[0].setCenter.calls.mostRecent().args[0].lat()).toEqual(10);
-            expect(maps[0].setCenter.calls.mostRecent().args[0].lng()).toEqual(20);
+                var searchBoxHandler = getEventHandler(searchBoxes[0].mockWrapper, "places_changed");
+                searchBoxHandler();
+                expect(maps[0].setCenter.calls.mostRecent().args[0].lat()).toEqual(60);
+                expect(maps[0].setCenter.calls.mostRecent().args[0].lng()).toEqual(80);
+            });
+
+            it("no map has a reference point", function() {
+                var comparator = new DistanceComparator.DistanceComparator(root);
+                searchBoxes[0].getPlaces.and.returnValue([mockPlace(10, 20)]);
+
+                var searchBoxHandler = getEventHandler(searchBoxes[0].mockWrapper, "places_changed");
+                searchBoxHandler();
+                expect(maps[0].setCenter.calls.mostRecent().args[0].lat()).toEqual(10);
+                expect(maps[0].setCenter.calls.mostRecent().args[0].lng()).toEqual(20);
+            });
         });
 
         it("updates reference point marker and circle", function() {

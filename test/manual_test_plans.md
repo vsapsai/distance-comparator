@@ -10,6 +10,8 @@
 
 ## Can search for a reference point by text.
 1. Search for a real location in the left map reference point search box and select it => map and reference point marker on the left are moved to selected location, map is centered on the reference point.
+2. Move a map so that reference point in the lower left corner.
+3. Search for a real location in the right map reference point search box and select it => reference point marker on the right is still in the lower left corner.
 
 # When both maps have reference points
 

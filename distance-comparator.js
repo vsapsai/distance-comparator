@@ -89,6 +89,9 @@ var DistanceComparator = (function() {
             //TODO(vsapsai): handle when there are no places.
             var newReferencePoint = referencePointSearchBox.getPlaces()[0].geometry.location;
             var centerOffset = self.getCenterOffset();
+            if (!centerOffset) {
+                centerOffset = self.delegate.getSharedCenterOffset();
+            }
             //TODO(vsapsai): update comparison point in some cases.
             self.referencePoint = newReferencePoint;
             marker.setPosition(self.referencePoint);
@@ -219,6 +222,18 @@ var DistanceComparator = (function() {
                 this.syncCircleRadiusWithMap(mapView);
             }
         }
+    };
+
+    DistanceComparator.prototype.getSharedCenterOffset = function() {
+        var centerOffset = undefined;
+        var i;
+        for (i = 0; i < this.maps.length; i++) {
+            centerOffset = this.maps[i].getCenterOffset();
+            if (centerOffset) {
+                break;
+            }
+        }
+        return centerOffset;
     };
 
     DistanceComparator.prototype.mapDidSelectComparisonPoint = function(mapView, position) {
