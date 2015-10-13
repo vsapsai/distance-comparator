@@ -8,6 +8,9 @@
 1. Zoom the map on the left => the map on the right should zoom too.
 2. Zoom the map on the right => the map on the left should zoom too.
 
+## Can search for a reference point by text.
+1. Search for a real location in the left map reference point search box and select it => map and reference point marker on the left are moved to selected location, map is centered on the reference point.
+
 # When both maps have reference points
 
 ## Movements should be synchronized.

@@ -26,7 +26,7 @@ describe("DistanceComparator", function() {
         google.maps.Map = mockClass("Map", ["getZoom", "setZoom", "getCenter", "setCenter"], maps);
         google.maps.Map.prototype.controls = {};
         google.maps.Map.prototype.controls[google.maps.ControlPosition.TOP_LEFT] = [];
-        google.maps.Marker = mockClass("Marker", ["property:Map", "property:Position"], markers);
+        google.maps.Marker = mockClass("Marker", ["property:Map", "property:Position", "setVisible"], markers);
         google.maps.Circle = mockClass("Circle", ["setRadius", "setVisible", "setCenter"], circles);
         google.maps.places.SearchBox = mockClass("SearchBox", ["getPlaces"], searchBoxes);
         google.maps.event.addDomListener = jasmine.createSpy("addDomListener");
@@ -413,6 +413,16 @@ describe("DistanceComparator", function() {
             expect(maps[0].setCenter.calls.mostRecent().args[0].lng()).toEqual(320);
         });
 
+        it("centers map on the new reference point if there was none before", function() {
+            var comparator = new DistanceComparator.DistanceComparator(root);
+            searchBoxes[0].getPlaces.and.returnValue([mockPlace(10, 20)]);
+
+            var searchBoxHandler = getEventHandler(searchBoxes[0].mockWrapper, "places_changed");
+            searchBoxHandler();
+            expect(maps[0].setCenter.calls.mostRecent().args[0].lat()).toEqual(10);
+            expect(maps[0].setCenter.calls.mostRecent().args[0].lng()).toEqual(20);
+        });
+
         it("updates reference point marker and circle", function() {
             var comparator = createDistanceComparator();
             // Simulate the reference point is to the left and to the bottom relative to the map center.
@@ -423,7 +433,9 @@ describe("DistanceComparator", function() {
             searchBoxHandler();
             expect(markers[1].setPosition.calls.mostRecent().args[0].lat()).toEqual(10);
             expect(markers[1].setPosition.calls.mostRecent().args[0].lng()).toEqual(20);
+            expect(markers[1].setVisible).toHaveBeenCalledWith(true);
             expect(markers[2].setPosition).not.toHaveBeenCalled();
+            expect(markers[2].setVisible).not.toHaveBeenCalled();
             expect(circles[0].setCenter.calls.mostRecent().args[0].lat()).toEqual(10);
             expect(circles[0].setCenter.calls.mostRecent().args[0].lng()).toEqual(20);
             expect(circles[1].setCenter).not.toHaveBeenCalled();

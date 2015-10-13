@@ -92,8 +92,15 @@ var DistanceComparator = (function() {
             //TODO(vsapsai): update comparison point in some cases.
             self.referencePoint = newReferencePoint;
             marker.setPosition(self.referencePoint);
-            self.setCenterOffset(centerOffset);
+            marker.setVisible(true);
             self.circle.setCenter(self.referencePoint);
+            if (centerOffset) {
+                self.setCenterOffset(centerOffset);
+            } else {
+                // If there was no reference point earlier, cannot preserve
+                // center offset and just center map on the new reference point.
+                self.map.setCenter(self.referencePoint);
+            }
             self.delegate.mapStateDidChange();
         });
         google.maps.event.addDomListener(comparisonPointSearchBox, "places_changed", function() {
