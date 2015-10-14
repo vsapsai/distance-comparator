@@ -264,7 +264,7 @@ var DistanceComparator = (function() {
         // * comparison point if present
         var state = {
             zoom: this.maps[0].getZoom(),
-            centerOffset: this.maps[0].getCenterOffset()
+            centerOffset: this.getSharedCenterOffset()
         };
         state.maps = this.maps.map(function(mapView) {
             return mapView.getState();

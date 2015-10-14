@@ -541,8 +541,24 @@ describe("DistanceComparator", function() {
             expect(centerOffset.lngDiff).toEqual(20);
         });
 
-        //TODO(vsapsai): add when don't require reference points
-        it("does not contain center offset when has no reference points", function() {});
+        it("contains center offset when at least 1 map has a reference point", function() {
+            var comparator = new DistanceComparator.DistanceComparator(root, {maps: [
+                {},
+                {referencePoint: mapSettings.maps[1].referencePoint}
+            ]});
+            maps[1].getCenter.and.returnValue(new google.maps.LatLng(110, 120));
+
+            var centerOffset = comparator.getState().centerOffset;
+            expect(centerOffset).toBeDefined();
+            expect(centerOffset.latDiff).toEqual(10);
+            expect(centerOffset.lngDiff).toEqual(20);
+        });
+
+        it("does not contain center offset when has no reference points", function() {
+            var comparator = new DistanceComparator.DistanceComparator(root);
+            var centerOffset = comparator.getState().centerOffset;
+            expect(centerOffset).toBeUndefined();
+        });
 
         it("contains comparison point when present", function() {
             var comparator = createDistanceComparator();
