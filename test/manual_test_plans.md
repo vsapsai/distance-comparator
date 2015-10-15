@@ -42,3 +42,8 @@
 ## Can search for a comparison point by text.
 1. Search for a real location in the left map comparison point search box and select it => the comparison marker should be put on selected location, circles should be drawn.
 2. Search for a real location in the right map comparison point search box and select it => the comparison marker should be shown on the right map in correct location, circles should update radii.
+
+# When both maps have reference points and there is a comparison point
+
+## Searching for a reference point by text should keep circle radius correct.
+1. Search for a real location in the reference point search box for the map that has comparison point and select it => map and reference point marker are moved to selected location, circles should update radii so that circle still goes through the comparison point.

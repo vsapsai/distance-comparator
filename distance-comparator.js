@@ -82,7 +82,8 @@ var DistanceComparator = (function() {
         google.maps.event.addDomListener(marker, "dragend", function() {
             self.referencePoint = marker.getPosition();
             self.circle.setCenter(self.referencePoint);
-            self.delegate.mapDidMove(self, /*didReferencePointMove =*/true);
+            self.delegate.mapDidMove(self);
+            self.delegate.referencePointDidMove(self);
             self.delegate.mapStateDidChange();
         });
         google.maps.event.addDomListener(referencePointSearchBox, "places_changed", function() {
@@ -104,6 +105,7 @@ var DistanceComparator = (function() {
                 // center offset and just center map on the new reference point.
                 self.map.setCenter(self.referencePoint);
             }
+            self.delegate.referencePointDidMove(self);
             self.delegate.mapStateDidChange();
         });
         google.maps.event.addDomListener(comparisonPointSearchBox, "places_changed", function() {
@@ -214,13 +216,13 @@ var DistanceComparator = (function() {
         }
     };
 
-    DistanceComparator.prototype.mapDidMove = function(mapView, didReferencePointMove) {
+    DistanceComparator.prototype.mapDidMove = function(mapView) {
         this.syncBoundsWithMap(mapView.tag);
-        if (didReferencePointMove) {
-            // Update circles' radii if reference point changed in comparison point map.
-            if (this.locationMarker.getMap() === mapView.getMap()) {
-                this.syncCircleRadiusWithMap(mapView);
-            }
+    };
+
+    DistanceComparator.prototype.referencePointDidMove = function(mapView) {
+        if (this.locationMarker.getMap() === mapView.getMap()) {
+            this.syncCircleRadiusWithMap(mapView);
         }
     };
 

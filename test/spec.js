@@ -458,6 +458,21 @@ describe("DistanceComparator", function() {
             expect(circles[1].setCenter).not.toHaveBeenCalled();
         });
 
+        it("updates circle radius to make sure circle goes through comparison point", function() {
+            var comparator = createDistanceComparator();
+            // Put a comparison point.
+            var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
+            doubleClickHandler({latLng: new google.maps.LatLng(10, 0)});
+            // Simulate reference point search.
+            maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint);
+            searchBoxes[0].getPlaces.and.returnValue([mockPlace(10, 20)]);
+
+            var searchBoxHandler = getEventHandler(searchBoxes[0].mockWrapper, "places_changed");
+            searchBoxHandler();
+            expect(circles[0].setRadius).toHaveBeenCalledWith(20);
+            expect(circles[1].setRadius).toHaveBeenCalledWith(20);
+        });
+
         it("changes state", function() {
             var comparator = createDistanceComparator();
             var stateChangeHandler = jasmine.createSpy("stateChangeHandler");
