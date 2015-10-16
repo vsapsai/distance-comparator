@@ -524,6 +524,21 @@ describe("DistanceComparator", function() {
             expect(circles[1].setVisible).toHaveBeenCalledWith(true);
         });
 
+        it("hides circles if comparison point is moved to map without reference point", function() {
+            var comparator = new DistanceComparator.DistanceComparator(root, {maps: [
+                {referencePoint: mapSettings.maps[0].referencePoint}
+            ]});
+            // Put a comparison point marker.
+            //TODO(vsapsai): create DistanceComparator already with comparison point.
+            var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
+            doubleClickHandler({latLng: new google.maps.LatLng(10, 20)});
+            searchBoxes[3].getPlaces.and.returnValue([mockPlace(130, 140)]);
+
+            getEventHandler(searchBoxes[3].mockWrapper, "places_changed")();
+            expect(circles[0].setVisible).toHaveBeenCalledWith(false);
+            expect(circles[1].setVisible).toHaveBeenCalledWith(false);
+        });
+
         it("changes state", function() {
             var comparator = createDistanceComparator();
             var stateChangeHandler = jasmine.createSpy("stateChangeHandler");

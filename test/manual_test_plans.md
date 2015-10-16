@@ -13,6 +13,20 @@
 2. Move a map so that reference point in the lower left corner.
 3. Search for a real location in the right map reference point search box and select it => reference point marker on the right is still in the lower left corner.
 
+## Can add reference point after comparison point.
+0. Reset the state, it is important there are no reference points.
+1. Search for a real location in the left map comparison point search box and select it => a marker should be put in correct location.
+2. Search for a real location in the left map reference point search box and select it => map and reference point marker on the left are moved to selected location, map is centered on the reference point, a circle is drawn on the left map only.
+
+
+# When one map has a reference point
+
+## Moving comparison point to a map without a reference point should hide circles.
+1. Given that you have a reference point on the left map.
+2. Double click the map on the left => a marker should be put on the double click position, circle with a center at reference point and going through comparison point should be shown on the left map, no circle should be on the right map.
+3. Search for a real location in the right map comparison point search box and select it => the comparison marker should be shown on the right map in correct location, no circles should be shown.
+
+
 # When both maps have reference points
 
 ## Movements should be synchronized.

@@ -127,7 +127,7 @@ var DistanceComparator = (function() {
         inputElement.setAttribute("placeholder", placeholderText);
         inputElement.classList.add("search-box");
         return inputElement;
-    }
+    };
 
     MapView.prototype.getMap = function() {
         return this.map;
@@ -139,6 +139,10 @@ var DistanceComparator = (function() {
 
     MapView.prototype.setZoom = function(zoom) {
         this.map.setZoom(zoom);
+    };
+
+    MapView.prototype.hasReferencePoint = function() {
+        return !!this.referencePoint;
     };
 
     MapView.prototype.getCenterOffset = function() {
@@ -159,9 +163,13 @@ var DistanceComparator = (function() {
         return google.maps.geometry.spherical.computeDistanceBetween(this.referencePoint, point);
     };
 
-    MapView.prototype.setCircleRadius = function(radius) {
-        this.circle.setRadius(radius);
-        this.circle.setVisible(true);
+    MapView.prototype.setCircleState = function(isPresent, radius) {
+        if (isPresent) {
+            this.circle.setRadius(radius);
+            this.circle.setVisible(true);
+        } else {
+            this.circle.setVisible(false);
+        }
     };
 
     MapView.prototype.getState = function() {
@@ -208,11 +216,15 @@ var DistanceComparator = (function() {
         this.isBoundsUpdateInProgress = false;
     };
 
-    DistanceComparator.prototype.syncCircleRadiusWithMap = function(mapView) {
-        var radius = mapView.getDistanceToReferencePoint(this.locationMarker.getPosition());
+    DistanceComparator.prototype.syncCircleStateWithMap = function(mapView) {
+        var isCirclePresent = mapView.hasReferencePoint();
+        var radius = 0;
+        if (isCirclePresent) {
+            radius = mapView.getDistanceToReferencePoint(this.locationMarker.getPosition());
+        }
         var i;
         for (i = 0; i < this.maps.length; i++) {
-            this.maps[i].setCircleRadius(radius);
+            this.maps[i].setCircleState(isCirclePresent, radius);
         }
     };
 
@@ -222,7 +234,7 @@ var DistanceComparator = (function() {
 
     DistanceComparator.prototype.referencePointDidMove = function(mapView) {
         if (this.locationMarker.getMap() === mapView.getMap()) {
-            this.syncCircleRadiusWithMap(mapView);
+            this.syncCircleStateWithMap(mapView);
         }
     };
 
@@ -241,7 +253,7 @@ var DistanceComparator = (function() {
     DistanceComparator.prototype.mapDidSelectComparisonPoint = function(mapView, position) {
         this.locationMarker.setMap(mapView.getMap());
         this.locationMarker.setPosition(position);
-        this.syncCircleRadiusWithMap(mapView);
+        this.syncCircleStateWithMap(mapView);
         this.notifyStateDidChange();
     };
 
