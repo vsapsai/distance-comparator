@@ -164,12 +164,8 @@ var DistanceComparator = (function() {
     };
 
     MapView.prototype.setCircleState = function(isPresent, radius) {
-        if (isPresent) {
-            this.circle.setRadius(radius);
-            this.circle.setVisible(true);
-        } else {
-            this.circle.setVisible(false);
-        }
+        this.circle.setRadius(radius);
+        this.circle.setVisible(isPresent && this.hasReferencePoint());
     };
 
     MapView.prototype.getState = function() {

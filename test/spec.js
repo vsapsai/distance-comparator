@@ -320,6 +320,17 @@ describe("DistanceComparator", function() {
             expect(circles[1].setVisible).toHaveBeenCalledWith(true);
         });
 
+        it("does not show a circle at map without reference point", function() {
+            var comparator = new DistanceComparator.DistanceComparator(root, {maps: [
+                {},
+                {referencePoint: mapSettings.maps[1].referencePoint}
+            ]});
+
+            getEventHandler(maps[1].mockWrapper, "dblclick")({latLng: new google.maps.LatLng(110, 120)});
+            expect(circles[0].setVisible).toHaveBeenCalledWith(false);
+            expect(circles[1].setVisible).toHaveBeenCalledWith(true);
+        });
+
         it("changes state", function() {
             var comparator = createDistanceComparator();
             var stateChangeHandler = jasmine.createSpy("stateChangeHandler");
