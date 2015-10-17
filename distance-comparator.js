@@ -61,7 +61,7 @@ var DistanceComparator = (function() {
             markerConfig.position = this.referencePoint;
             markerConfig.visible = true;
         }
-        var marker = new google.maps.Marker(markerConfig);
+        this.marker = new google.maps.Marker(markerConfig);
         var referencePointInputElement = this.createSearchBoxElement("Reference Point");
         var referencePointSearchBox = new google.maps.places.SearchBox(referencePointInputElement);
         this.map.controls[google.maps.ControlPosition.TOP_LEFT].push(referencePointInputElement);
@@ -79,24 +79,33 @@ var DistanceComparator = (function() {
         google.maps.event.addDomListener(this.map, "idle", function() {
             self.delegate.mapStateDidChange();
         });
-        google.maps.event.addDomListener(marker, "dragend", function() {
-            self.referencePoint = marker.getPosition();
+        google.maps.event.addDomListener(this.marker, "dragend", function() {
+            self.referencePoint = self.marker.getPosition();
             self.circle.setCenter(self.referencePoint);
             self.delegate.mapDidMove(self);
             self.delegate.referencePointDidMove(self);
             self.delegate.mapStateDidChange();
         });
+        referencePointInputElement.addEventListener("change", function(event) {
+            if (!event.target.value) {
+                self._clearReferencePoint();
+            }
+        });
         google.maps.event.addDomListener(referencePointSearchBox, "places_changed", function() {
-            //TODO(vsapsai): handle when there are no places.
-            var newReferencePoint = referencePointSearchBox.getPlaces()[0].geometry.location;
+            var places = referencePointSearchBox.getPlaces();
+            if (places.length == 0) {
+                self._clearReferencePoint();
+                return;
+            }
+            var newReferencePoint = places[0].geometry.location;
             var centerOffset = self.getCenterOffset();
             if (!centerOffset) {
                 centerOffset = self.delegate.getSharedCenterOffset();
             }
             //TODO(vsapsai): update comparison point in some cases.
             self.referencePoint = newReferencePoint;
-            marker.setPosition(self.referencePoint);
-            marker.setVisible(true);
+            self.marker.setPosition(self.referencePoint);
+            self.marker.setVisible(true);
             self.circle.setCenter(self.referencePoint);
             if (centerOffset) {
                 self.setCenterOffset(centerOffset);
@@ -108,9 +117,14 @@ var DistanceComparator = (function() {
             self.delegate.referencePointDidMove(self);
             self.delegate.mapStateDidChange();
         });
+        comparisonPointInputElement.addEventListener("change", function(event) {
+            if (!event.target.value) {
+                self.delegate.mapDidSelectComparisonPoint(self, null);
+            }
+        });
         google.maps.event.addDomListener(comparisonPointSearchBox, "places_changed", function() {
-            //TODO(vsapsai): handle when there are no places.
-            var placePosition = comparisonPointSearchBox.getPlaces()[0].geometry.location;
+            var places = comparisonPointSearchBox.getPlaces();
+            var placePosition = (places.length > 0) ? places[0].geometry.location : null;
             self.delegate.mapDidSelectComparisonPoint(self, placePosition);
         });
     };
@@ -127,6 +141,12 @@ var DistanceComparator = (function() {
         inputElement.setAttribute("placeholder", placeholderText);
         inputElement.classList.add("search-box");
         return inputElement;
+    };
+
+    MapView.prototype._clearReferencePoint = function() {
+        this.referencePoint = null;
+        this.marker.setVisible(false);
+        this.delegate.referencePointDidMove(this);
     };
 
     MapView.prototype.getMap = function() {
@@ -147,7 +167,7 @@ var DistanceComparator = (function() {
 
     MapView.prototype.getCenterOffset = function() {
         var result = undefined;
-        if (this.referencePoint) {
+        if (this.hasReferencePoint()) {
             result = getLatLngDifference(this.referencePoint, this.map.getCenter());
         }
         return result;
@@ -213,7 +233,7 @@ var DistanceComparator = (function() {
     };
 
     DistanceComparator.prototype.syncCircleStateWithMap = function(mapView) {
-        var isCirclePresent = mapView.hasReferencePoint();
+        var isCirclePresent = mapView.hasReferencePoint() && (this.locationMarker.getMap() === mapView.getMap());
         var radius = 0;
         if (isCirclePresent) {
             radius = mapView.getDistanceToReferencePoint(this.locationMarker.getPosition());
@@ -247,8 +267,12 @@ var DistanceComparator = (function() {
     };
 
     DistanceComparator.prototype.mapDidSelectComparisonPoint = function(mapView, position) {
-        this.locationMarker.setMap(mapView.getMap());
-        this.locationMarker.setPosition(position);
+        if (position) {
+            this.locationMarker.setMap(mapView.getMap());
+            this.locationMarker.setPosition(position);
+        } else {
+            this.locationMarker.setMap(null);
+        }
         this.syncCircleStateWithMap(mapView);
         this.notifyStateDidChange();
     };

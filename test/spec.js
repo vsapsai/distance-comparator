@@ -484,6 +484,54 @@ describe("DistanceComparator", function() {
             expect(circles[1].setRadius).toHaveBeenCalledWith(20);
         });
 
+        describe("empty search string", function() {
+            it("hides reference point marker", function() {
+                var comparator = createDistanceComparator();
+
+                var searchBox0Element = searchBoxes[0].__constructor__.calls.argsFor(0)[0];
+                searchBox0Element.value = "";
+                searchBox0Element.dispatchEvent(new Event("change"));
+                expect(markers[1].setVisible).toHaveBeenCalledWith(false);
+            });
+
+            it("hides circles", function() {
+                var comparator = createDistanceComparator();
+                // Put a comparison point.
+                //TODO(vsapsai): create DistanceComparator already with comparison point.
+                var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
+                doubleClickHandler({latLng: new google.maps.LatLng(10, 0)});
+
+                var searchBox0Element = searchBoxes[0].__constructor__.calls.argsFor(0)[0];
+                searchBox0Element.value = "";
+                searchBox0Element.dispatchEvent(new Event("change"));
+                expect(circles[0].setVisible).toHaveBeenCalledWith(false);
+                expect(circles[1].setVisible).toHaveBeenCalledWith(false);
+            });
+        });
+
+        describe("no places found", function() {
+            it("hides reference point marker", function() {
+                var comparator = createDistanceComparator();
+                searchBoxes[0].getPlaces.and.returnValue([]);
+
+                getEventHandler(searchBoxes[0].mockWrapper, "places_changed")();
+                expect(markers[1].setVisible).toHaveBeenCalledWith(false);
+            });
+
+            it("hides circles", function() {
+                var comparator = createDistanceComparator();
+                // Put a comparison point.
+                //TODO(vsapsai): create DistanceComparator already with comparison point.
+                var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
+                doubleClickHandler({latLng: new google.maps.LatLng(10, 0)});
+                searchBoxes[0].getPlaces.and.returnValue([]);
+
+                getEventHandler(searchBoxes[0].mockWrapper, "places_changed")();
+                expect(circles[0].setVisible).toHaveBeenCalledWith(false);
+                expect(circles[1].setVisible).toHaveBeenCalledWith(false);
+            });
+        });
+
         it("changes state", function() {
             var comparator = createDistanceComparator();
             var stateChangeHandler = jasmine.createSpy("stateChangeHandler");
@@ -548,6 +596,62 @@ describe("DistanceComparator", function() {
             getEventHandler(searchBoxes[3].mockWrapper, "places_changed")();
             expect(circles[0].setVisible).toHaveBeenCalledWith(false);
             expect(circles[1].setVisible).toHaveBeenCalledWith(false);
+        });
+
+        describe("empty search string", function() {
+            it("removes comparison point marker", function() {
+                var comparator = createDistanceComparator();
+                // Put a comparison point marker.
+                //TODO(vsapsai): create DistanceComparator already with comparison point.
+                var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
+                doubleClickHandler({latLng: new google.maps.LatLng(10, 20)});
+
+                var searchBox1Element = searchBoxes[1].__constructor__.calls.argsFor(0)[0];
+                searchBox1Element.value = "";
+                searchBox1Element.dispatchEvent(new Event("change"));
+                expect(markers[0].setMap).toHaveBeenCalledWith(null);
+            });
+
+            it("hides circles", function() {
+                var comparator = createDistanceComparator();
+                // Put a comparison point.
+                //TODO(vsapsai): create DistanceComparator already with comparison point.
+                var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
+                doubleClickHandler({latLng: new google.maps.LatLng(10, 0)});
+
+                var searchBox1Element = searchBoxes[1].__constructor__.calls.argsFor(0)[0];
+                searchBox1Element.value = "";
+                searchBox1Element.dispatchEvent(new Event("change"));
+                expect(circles[0].setVisible).toHaveBeenCalledWith(false);
+                expect(circles[1].setVisible).toHaveBeenCalledWith(false);
+            });
+        });
+
+        describe("no places found", function() {
+            it("hides comparison point marker", function() {
+                var comparator = createDistanceComparator();
+                // Put a comparison point marker.
+                //TODO(vsapsai): create DistanceComparator already with comparison point.
+                var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
+                doubleClickHandler({latLng: new google.maps.LatLng(10, 20)});
+                searchBoxes[1].getPlaces.and.returnValue([]);
+
+                getEventHandler(searchBoxes[1].mockWrapper, "places_changed")();
+                expect(markers[0].setMap).toHaveBeenCalledWith(null);
+            });
+
+            it("hides circles", function() {
+                var comparator = createDistanceComparator();
+                // Put a comparison point.
+                //TODO(vsapsai): create DistanceComparator already with comparison point.
+                var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
+                doubleClickHandler({latLng: new google.maps.LatLng(10, 0)});
+                searchBoxes[1].getPlaces.and.returnValue([]);
+
+                getEventHandler(searchBoxes[1].mockWrapper, "places_changed")();
+                expect(circles[0].setVisible).toHaveBeenCalledWith(false);
+                expect(circles[1].setVisible).toHaveBeenCalledWith(false);
+            });
         });
 
         it("changes state", function() {
