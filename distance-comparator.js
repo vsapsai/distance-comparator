@@ -31,9 +31,16 @@ var DistanceComparator = (function() {
     /**
      * Represents a single map.
      */
-    var MapView = function(parentElement, mapConfig, zoom) {
+    var MapView = function(parentElement, mapConfig, zoom, centerOffset) {
         this.referencePoint = mapConfig.referencePoint;
-        var mapCenter = this.referencePoint || DEFAULT_PLACE;
+        var mapCenter = DEFAULT_PLACE;
+        if (this.referencePoint) {
+            if (centerOffset) {
+                mapCenter = latLngByApplyingDifference(this.referencePoint, centerOffset);
+            } else {
+                mapCenter = this.referencePoint;
+            }
+        }
 
         var mapElement = this.createMapElement();
         parentElement.appendChild(mapElement);
@@ -201,13 +208,14 @@ var DistanceComparator = (function() {
         });
         this.isBoundsUpdateInProgress = false;
         var zoom = (mapSettings && mapSettings.zoom) || DEFAULT_ZOOM;
+        var centerOffset = mapSettings ? mapSettings.centerOffset : null;
         var i;
         for (i = 0; i < 2; i++) {
             var mapConfig = {};
             if (mapSettings && mapSettings.maps && mapSettings.maps[i]) {
                 mapConfig = mapSettings.maps[i];
             }
-            var map = new MapView(comparatorElement, mapConfig, zoom);
+            var map = new MapView(comparatorElement, mapConfig, zoom, centerOffset);
             map.delegate = this;
             map.tag = i;
             this.maps.push(map);

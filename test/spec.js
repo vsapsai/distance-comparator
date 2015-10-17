@@ -218,6 +218,17 @@ describe("DistanceComparator", function() {
             var map1CreationConfig = maps[1].__constructor__.calls.argsFor(0)[1];
             expect(map1CreationConfig.center).toEqual(mapConfigs[1].referencePoint);
         });
+
+        it("creates maps offset by centerOffset", function() {
+            var comparator = new DistanceComparator.DistanceComparator(root, {
+                centerOffset: {latDiff: 10, lngDiff: 20},
+                maps: [
+                    { referencePoint: new google.maps.LatLng(10, 10) }
+                ]
+            });
+            var map0CreationConfig = maps[0].__constructor__.calls.argsFor(0)[1];
+            expect(map0CreationConfig.center).toEqual(new google.maps.LatLng(20, 30));
+        });
     });
 
     describe("movement and zoom", function() {
