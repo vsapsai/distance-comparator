@@ -104,6 +104,54 @@ describe("DistanceComparator", function() {
             expect(marker2CreationConfig.visible).toBeTruthy();
         });
 
+        it("creates comparison point with specified settings", function() {
+            var comparisonPoint = {
+                mapIndex: 1,
+                position: new google.maps.LatLng(10, 20)
+            };
+            var comparator = new DistanceComparator.DistanceComparator(root, { comparisonPoint: comparisonPoint });
+
+            expect(markers[0].setPosition).toHaveBeenCalledWith(comparisonPoint.position);
+            expect(markers[0].setMap).toHaveBeenCalledWith(maps[1].mockWrapper);
+        });
+
+        describe("does not create comparison point with invalid settings", function() {
+            it("negative map index", function() {
+                var comparator = new DistanceComparator.DistanceComparator(root, {
+                    comparisonPoint: {
+                        mapIndex: -7,
+                        position: new google.maps.LatLng(10, 20)
+                    }
+                });
+
+                expect(markers[0].setPosition).not.toHaveBeenCalled();
+                expect(markers[0].setMap).not.toHaveBeenCalled();
+            });
+
+            it("too big map index", function() {
+                var comparator = new DistanceComparator.DistanceComparator(root, {
+                    comparisonPoint: {
+                        mapIndex: 2,
+                        position: new google.maps.LatLng(10, 20)
+                    }
+                });
+
+                expect(markers[0].setPosition).not.toHaveBeenCalled();
+                expect(markers[0].setMap).not.toHaveBeenCalled();
+            });
+
+            it("no position", function() {
+                var comparator = new DistanceComparator.DistanceComparator(root, {
+                    comparisonPoint: {
+                        mapIndex: 0
+                    }
+                });
+
+                expect(markers[0].setPosition).not.toHaveBeenCalled();
+                expect(markers[0].setMap).not.toHaveBeenCalled();
+            });
+        });
+
         it("creates invisible circles for later", function() {
             var comparator = createDistanceComparator();
             expect(circles.length).toEqual(2);

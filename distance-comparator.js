@@ -226,6 +226,15 @@ var DistanceComparator = (function() {
             map.tag = i;
             this.maps.push(map);
         }
+        if (mapSettings && mapSettings.comparisonPoint) {
+            var mapIndex = mapSettings.comparisonPoint.mapIndex;
+            var isValidComparisonPointConfig = mapSettings.comparisonPoint.position
+                && ((0 <= mapIndex) && (mapIndex < this.maps.length));
+            if (isValidComparisonPointConfig) {
+                this.locationMarker.setPosition(mapSettings.comparisonPoint.position);
+                this.locationMarker.setMap(this.maps[mapSettings.comparisonPoint.mapIndex].getMap());
+            }
+        }
     };
 
     DistanceComparator.prototype.syncBoundsWithMap = function(mapIndex) {
