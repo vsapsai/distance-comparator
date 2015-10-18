@@ -229,6 +229,17 @@ describe("DistanceComparator", function() {
             var map0CreationConfig = maps[0].__constructor__.calls.argsFor(0)[1];
             expect(map0CreationConfig.center).toEqual(new google.maps.LatLng(20, 30));
         });
+
+        it("creates maps at center if reference point is absent", function() {
+            var mapCenter = new google.maps.LatLng(10, 10);
+            var comparator = new DistanceComparator.DistanceComparator(root, {
+                maps: [
+                    { center: mapCenter }
+                ]
+            });
+            var map0CreationConfig = maps[0].__constructor__.calls.argsFor(0)[1];
+            expect(map0CreationConfig.center).toEqual(mapCenter);
+        });
     });
 
     describe("movement and zoom", function() {
@@ -749,13 +760,25 @@ describe("DistanceComparator", function() {
                 var i;
                 for (i = 0; i < mapsState.length; i++) {
                     expect(mapsState[i].referencePoint).toBeDefined();
+                    expect(mapsState[i].center).toBeUndefined();
                     expect(mapsState[i].referencePoint.lat()).toEqual(mapSettings.maps[i].referencePoint.lat());
                     expect(mapsState[i].referencePoint.lng()).toEqual(mapSettings.maps[i].referencePoint.lng());
                 }
             });
 
-            //TODO(vsapsai): add when don't require reference points
-            it("contains center position when reference point is absent", function() {});
+            it("contains center position when reference point is absent", function() {
+                var comparator = new DistanceComparator.DistanceComparator(root);
+                maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint);
+                maps[1].getCenter.and.returnValue(mapSettings.maps[1].referencePoint);
+                var mapsState = comparator.getState().maps;
+                var i;
+                for (i = 0; i < mapsState.length; i++) {
+                    expect(mapsState[i].referencePoint).toBeUndefined();
+                    expect(mapsState[i].center).toBeDefined();
+                    expect(mapsState[i].center.lat()).toEqual(mapSettings.maps[i].referencePoint.lat());
+                    expect(mapsState[i].center.lng()).toEqual(mapSettings.maps[i].referencePoint.lng());
+                }
+            });
         });
     });
 });
@@ -787,6 +810,14 @@ describe("state <-> string conversion", function() {
             };
             expect(DistanceComparator.encodeStateToString({maps: [mapState]}))
                 .toEqual("ref0=0.123457,-0.123457");
+        });
+
+        it("encodes maps' center points", function() {
+            var mapState = {
+                center: new google.maps.LatLng(0.1234567, -0.1234567)
+            };
+            expect(DistanceComparator.encodeStateToString({maps: [mapState]}))
+                .toEqual("center0=0.123457,-0.123457");
         });
 
         it("separates components with &", function() {

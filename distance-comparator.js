@@ -40,6 +40,8 @@ var DistanceComparator = (function() {
             } else {
                 mapCenter = this.referencePoint;
             }
+        } else if (mapConfig.center) {
+            mapCenter = mapConfig.center;
         }
 
         var mapElement = this.createMapElement();
@@ -196,9 +198,13 @@ var DistanceComparator = (function() {
     };
 
     MapView.prototype.getState = function() {
-        return {
-            referencePoint: this.referencePoint
-        };
+        var state = {};
+        if (this.hasReferencePoint()) {
+            state.referencePoint = this.referencePoint;
+        } else {
+            state.center = this.map.getCenter();
+        }
+        return state;
     };
 
     var DistanceComparator = function(comparatorElement, mapSettings) {
@@ -349,6 +355,8 @@ var DistanceComparator = (function() {
                 var mapState = state.maps[i];
                 if (mapState.referencePoint) {
                     components.push("ref" + i + "=" + getUrlValueForLatLng(mapState.referencePoint));
+                } else if (mapState.center) {
+                    components.push("center" + i + "=" + getUrlValueForLatLng(mapState.center));
                 }
             }
         }
