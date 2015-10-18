@@ -56,6 +56,15 @@ describe("DistanceComparator", function() {
         return new DistanceComparator.DistanceComparator(root, mapSettings);
     }
 
+    function createDistanceComparatorWithComparisonPoint() {
+        return new DistanceComparator.DistanceComparator(root, {
+            comparisonPoint: {
+                mapIndex: 0,
+                position: new google.maps.LatLng(10, 20)
+            }
+        });
+    }
+
     beforeEach(mockGoogleMaps);
 
     //TODO(vsapsai): test all functionality when both reference points
@@ -447,7 +456,6 @@ describe("DistanceComparator", function() {
             // Put a comparison point marker.
             var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
             var comparisonPoint = new google.maps.LatLng(10, 0);
-            //markers[0].getPosition
             doubleClickHandler({latLng: comparisonPoint});
             // Simulate dragging reference point.
             maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint);
@@ -565,11 +573,7 @@ describe("DistanceComparator", function() {
             });
 
             it("hides circles", function() {
-                var comparator = createDistanceComparator();
-                // Put a comparison point.
-                //TODO(vsapsai): create DistanceComparator already with comparison point.
-                var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
-                doubleClickHandler({latLng: new google.maps.LatLng(10, 0)});
+                var comparator = createDistanceComparatorWithComparisonPoint();
 
                 var searchBox0Element = searchBoxes[0].__constructor__.calls.argsFor(0)[0];
                 searchBox0Element.value = "";
@@ -589,11 +593,7 @@ describe("DistanceComparator", function() {
             });
 
             it("hides circles", function() {
-                var comparator = createDistanceComparator();
-                // Put a comparison point.
-                //TODO(vsapsai): create DistanceComparator already with comparison point.
-                var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
-                doubleClickHandler({latLng: new google.maps.LatLng(10, 0)});
+                var comparator = createDistanceComparatorWithComparisonPoint();
                 searchBoxes[0].getPlaces.and.returnValue([]);
 
                 getEventHandler(searchBoxes[0].mockWrapper, "places_changed")();
@@ -654,13 +654,12 @@ describe("DistanceComparator", function() {
         });
 
         it("hides circles if comparison point is moved to map without reference point", function() {
-            var comparator = new DistanceComparator.DistanceComparator(root, {maps: [
-                {referencePoint: mapSettings.maps[0].referencePoint}
-            ]});
-            // Put a comparison point marker.
-            //TODO(vsapsai): create DistanceComparator already with comparison point.
-            var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
-            doubleClickHandler({latLng: new google.maps.LatLng(10, 20)});
+            var comparator = new DistanceComparator.DistanceComparator(root, {
+                maps: [
+                    {referencePoint: mapSettings.maps[0].referencePoint}
+                ],
+                comparisonPoint: { mapIndex: 0, position: new google.maps.LatLng(10, 20) }
+            });
             searchBoxes[3].getPlaces.and.returnValue([mockPlace(130, 140)]);
 
             getEventHandler(searchBoxes[3].mockWrapper, "places_changed")();
@@ -670,11 +669,7 @@ describe("DistanceComparator", function() {
 
         describe("empty search string", function() {
             it("removes comparison point marker", function() {
-                var comparator = createDistanceComparator();
-                // Put a comparison point marker.
-                //TODO(vsapsai): create DistanceComparator already with comparison point.
-                var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
-                doubleClickHandler({latLng: new google.maps.LatLng(10, 20)});
+                var comparator = createDistanceComparatorWithComparisonPoint();
 
                 var searchBox1Element = searchBoxes[1].__constructor__.calls.argsFor(0)[0];
                 searchBox1Element.value = "";
@@ -683,11 +678,7 @@ describe("DistanceComparator", function() {
             });
 
             it("hides circles", function() {
-                var comparator = createDistanceComparator();
-                // Put a comparison point.
-                //TODO(vsapsai): create DistanceComparator already with comparison point.
-                var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
-                doubleClickHandler({latLng: new google.maps.LatLng(10, 0)});
+                var comparator = createDistanceComparatorWithComparisonPoint();
 
                 var searchBox1Element = searchBoxes[1].__constructor__.calls.argsFor(0)[0];
                 searchBox1Element.value = "";
@@ -699,11 +690,7 @@ describe("DistanceComparator", function() {
 
         describe("no places found", function() {
             it("hides comparison point marker", function() {
-                var comparator = createDistanceComparator();
-                // Put a comparison point marker.
-                //TODO(vsapsai): create DistanceComparator already with comparison point.
-                var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
-                doubleClickHandler({latLng: new google.maps.LatLng(10, 20)});
+                var comparator = createDistanceComparatorWithComparisonPoint();
                 searchBoxes[1].getPlaces.and.returnValue([]);
 
                 getEventHandler(searchBoxes[1].mockWrapper, "places_changed")();
@@ -711,11 +698,7 @@ describe("DistanceComparator", function() {
             });
 
             it("hides circles", function() {
-                var comparator = createDistanceComparator();
-                // Put a comparison point.
-                //TODO(vsapsai): create DistanceComparator already with comparison point.
-                var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
-                doubleClickHandler({latLng: new google.maps.LatLng(10, 0)});
+                var comparator = createDistanceComparatorWithComparisonPoint();
                 searchBoxes[1].getPlaces.and.returnValue([]);
 
                 getEventHandler(searchBoxes[1].mockWrapper, "places_changed")();
