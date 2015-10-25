@@ -28,6 +28,38 @@ var DistanceComparator = (function() {
         return latLng.lat().toFixed(precision) + "," + latLng.lng().toFixed(precision);
     }
 
+    function _parse2Floats(string) {
+        var strings = string.split(",", 2);
+        if (strings.length != 2) {
+            return null;
+        }
+        var floats = [parseFloat(strings[0]), parseFloat(strings[1])];
+        if (isNaN(floats[0]) || isNaN(floats[1])
+            || !isFinite(floats[0]) || !isFinite(floats[1])) {
+            return null;
+        }
+        return floats;
+    }
+
+    function parseLatLngDifference(string) {
+        var floats = _parse2Floats(string);
+        if (floats === null) {
+            return null;
+        }
+        return {
+            "latDiff": floats[0],
+            "lngDiff": floats[1]
+        };
+    }
+
+    function parseLatLng(string) {
+        var floats = _parse2Floats(string);
+        if (floats === null) {
+            return null;
+        }
+        return new google.maps.LatLng(floats[0], floats[1]);
+    }
+
     /**
      * Represents a single map.
      */
@@ -373,7 +405,62 @@ var DistanceComparator = (function() {
     }
 
     function decodeStateFromString(string) {
-        //TODO(vsapsai): implement
+        var components = (string || "").split("&");
+        var componentsDictionary = {};
+        components.forEach(function(component) {
+            var separatorIndex = component.indexOf("=");
+            if (separatorIndex != -1) {
+                componentsDictionary[component.substring(0, separatorIndex)] = component.substring(separatorIndex + 1);
+            }
+        });
+        var state = {};
+        if (componentsDictionary.zoom) {
+            var zoom = parseInt(componentsDictionary.zoom);
+            if (!isNaN(zoom)) {
+                state.zoom = zoom;
+            }
+        }
+        if (componentsDictionary.offset) {
+            var centerOffset = parseLatLngDifference(componentsDictionary.offset);
+            if (centerOffset) {
+                state.centerOffset = centerOffset;
+            }
+        }
+        if (componentsDictionary.comparison0 || componentsDictionary.comparison1) {
+            var mapIndex = componentsDictionary.comparison0 ? 0 : 1;
+            var position = parseLatLng(componentsDictionary.comparison0 || componentsDictionary.comparison1);
+            if (position) {
+                state.comparisonPoint = {
+                    mapIndex: mapIndex,
+                    position: position
+                };
+            }
+        }
+        var mapStates = [{}, {}];
+        var hasMapState = false;
+        var i;
+        for (i = 0; i < 2; i++) {
+            var centerString = componentsDictionary["center" + i];
+            if (centerString) {
+                var position = parseLatLng(centerString);
+                if (position) {
+                    mapStates[i].center = position;
+                    hasMapState = true;
+                }
+            }
+            var referencePointString = componentsDictionary["ref" + i];
+            if (referencePointString) {
+                var position = parseLatLng(referencePointString);
+                if (position) {
+                    mapStates[i].referencePoint = position;
+                    hasMapState = true;
+                }
+            }
+        }
+        if (hasMapState) {
+            state.maps = mapStates;
+        }
+        return state;
     }
 
     var exportObject = {};
