@@ -65,3 +65,7 @@
 0. Search for a valid reference point and comparison point in the right map.
 1. Search for some garbage like "sldkfjsldfkjsdf" in right map reference point search box and press enter => the reference point marker on the right map is hidden, on the left map it is still present, circles on both maps are hidden.
 2. Search for some garbage like "sldkfjsldfkjsdf" in the right map comparison point search box and press enter => the comparison marker should be hidden.
+
+## Current state should be reflected in URL.
+1. Do whatever actions you like => URL line in browser changes.
+2. Open another page with the same URL => state should be the same as in the first page.
