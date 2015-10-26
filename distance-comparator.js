@@ -265,8 +265,8 @@ var DistanceComparator = (function() {
             if (isValidComparisonPointConfig) {
                 this.locationMarker.setPosition(mapSettings.comparisonPoint.position);
                 var comparisonPointMapView = this.maps[mapSettings.comparisonPoint.mapIndex];
-                this.locationMarker.setMap(comparisonPointMapView.getMap());
-                this.syncCircleStateWithMap(comparisonPointMapView);
+                this.locationMarker.setMap(this.maps[mapSettings.comparisonPoint.mapIndex].getMap());
+                this.syncCircleState();
             }
         }
     };
@@ -289,13 +289,22 @@ var DistanceComparator = (function() {
         this.isBoundsUpdateInProgress = false;
     };
 
-    DistanceComparator.prototype.syncCircleStateWithMap = function(mapView) {
-        var isCirclePresent = mapView.hasReferencePoint() && (this.locationMarker.getMap() === mapView.getMap());
+    DistanceComparator.prototype.syncCircleState = function() {
+        var i;
+        var comparisonPointMapView = null;
+        if (this.locationMarker.getMap() !== null) {
+            for (i = 0; i < this.maps.length; i++) {
+                if (this.maps[i].getMap() === this.locationMarker.getMap()) {
+                    comparisonPointMapView = this.maps[i];
+                    break;
+                }
+            }
+        }
+        var isCirclePresent = (comparisonPointMapView !== null) && comparisonPointMapView.hasReferencePoint();
         var radius = 0;
         if (isCirclePresent) {
-            radius = mapView.getDistanceToReferencePoint(this.locationMarker.getPosition());
+            radius = comparisonPointMapView.getDistanceToReferencePoint(this.locationMarker.getPosition());
         }
-        var i;
         for (i = 0; i < this.maps.length; i++) {
             this.maps[i].setCircleState(isCirclePresent, radius);
         }
@@ -306,9 +315,7 @@ var DistanceComparator = (function() {
     };
 
     DistanceComparator.prototype.referencePointDidMove = function(mapView) {
-        if (this.locationMarker.getMap() === mapView.getMap()) {
-            this.syncCircleStateWithMap(mapView);
-        }
+        this.syncCircleState();
     };
 
     DistanceComparator.prototype.getSharedCenterOffset = function() {
@@ -330,7 +337,7 @@ var DistanceComparator = (function() {
         } else {
             this.locationMarker.setMap(null);
         }
-        this.syncCircleStateWithMap(mapView);
+        this.syncCircleState();
         this.notifyStateDidChange();
     };
 

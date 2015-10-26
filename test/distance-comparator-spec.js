@@ -577,6 +577,22 @@ describe("DistanceComparator", function() {
             expect(circles[1].setRadius).toHaveBeenCalledWith(20);
         });
 
+        it("shows circle if another map has a reference point and comparison point", function() {
+            var comparator = new DistanceComparator.DistanceComparator(root, {
+                maps: [{ referencePoint: new google.maps.LatLng(0, 0) }],
+                comparisonPoint: {
+                    mapIndex: 0,
+                    position: new google.maps.LatLng(10, 20)
+                }
+            });
+            maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint);
+            searchBoxes[2].getPlaces.and.returnValue([mockPlace(100, 100)]);
+            circles[1].setVisible.calls.reset();
+
+            getEventHandler(searchBoxes[2].mockWrapper, "places_changed")();
+            expect(circles[1].setVisible).toHaveBeenCalledWith(true);
+        });
+
         describe("empty search string", function() {
             it("hides reference point marker", function() {
                 var comparator = createDistanceComparator();
@@ -594,6 +610,24 @@ describe("DistanceComparator", function() {
                 searchBox0Element.value = "";
                 searchBox0Element.dispatchEvent(new Event("change"));
                 expect(circles[0].setVisible).toHaveBeenCalledWith(false);
+                expect(circles[1].setVisible).toHaveBeenCalledWith(false);
+            });
+
+            it("hides circle on a map without a reference point", function() {
+                var comparator = new DistanceComparator.DistanceComparator(root, {
+                    maps: mapSettings.maps,
+                    comparisonPoint: {
+                        mapIndex: 0,
+                        position: new google.maps.LatLng(10, 20)
+                    }
+                });
+                circles[0].setVisible.calls.reset();
+                circles[1].setVisible.calls.reset();
+
+                var searchBox2Element = searchBoxes[2].__constructor__.calls.argsFor(0)[0];
+                searchBox2Element.value = "";
+                searchBox2Element.dispatchEvent(new Event("change"));
+                expect(circles[0].setVisible).not.toHaveBeenCalledWith(false);
                 expect(circles[1].setVisible).toHaveBeenCalledWith(false);
             });
         });
