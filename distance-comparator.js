@@ -264,7 +264,9 @@ var DistanceComparator = (function() {
                 && ((0 <= mapIndex) && (mapIndex < this.maps.length));
             if (isValidComparisonPointConfig) {
                 this.locationMarker.setPosition(mapSettings.comparisonPoint.position);
-                this.locationMarker.setMap(this.maps[mapSettings.comparisonPoint.mapIndex].getMap());
+                var comparisonPointMapView = this.maps[mapSettings.comparisonPoint.mapIndex];
+                this.locationMarker.setMap(comparisonPointMapView.getMap());
+                this.syncCircleStateWithMap(comparisonPointMapView);
             }
         }
     };

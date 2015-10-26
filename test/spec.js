@@ -180,6 +180,21 @@ describe("DistanceComparator", function() {
             expect(circle1CreationConfig.clickable).toEqual(false);
         });
 
+        it("creates visible circles if comparison point and reference points are specified", function() {
+            var comparisonPoint = {
+                mapIndex: 0,
+                position: new google.maps.LatLng(30, 40)
+            };
+            var comparator = new DistanceComparator.DistanceComparator(root, {
+                comparisonPoint: comparisonPoint,
+                maps: mapSettings.maps
+            });
+            expect(circles[0].setRadius).toHaveBeenCalledWith(50);
+            expect(circles[0].setVisible).toHaveBeenCalledWith(true);
+            expect(circles[1].setRadius).toHaveBeenCalledWith(50);
+            expect(circles[1].setVisible).toHaveBeenCalledWith(true);
+        });
+
         it("creates reference point and comparison point search boxes", function() {
             var comparator = createDistanceComparator();
             expect(searchBoxes.length).toEqual(4);
