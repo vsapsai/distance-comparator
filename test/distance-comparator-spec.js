@@ -896,18 +896,27 @@ describe("DistanceComparator", function() {
             });
 
             describe("reference point name", function() {
-                var placeName = "place name";
-                var comparator;
-                beforeEach(function() {
-                    comparator = new DistanceComparator.DistanceComparator(root);
+                function createComparatorAndTriggerSearch(placeName) {
+                    var comparator = new DistanceComparator.DistanceComparator(root);
                     maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint.position);
                     searchBoxes[0].getPlaces.and.returnValue([mockPlace(30, 40)]);
                     var searchBox0Element = searchBoxes[0].__constructor__.calls.argsFor(0)[0];
                     searchBox0Element.value = placeName;
                     getEventHandler(searchBoxes[0].mockWrapper, "places_changed")();
+                    return comparator;
+                }
+
+                it("present after creation", function() {
+                    var comparator = new DistanceComparator.DistanceComparator(root, getMapSettings(["ref0", "ref1"]));
+                    maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint.position);
+                    var mapsState = comparator.getState().maps;
+                    expect(mapsState[0].referencePoint.name).toEqual("ref0");
+                    expect(mapsState[1].referencePoint.name).toEqual("ref1");
                 });
 
                 it("present after reference point search", function() {
+                    var placeName = "place name";
+                    var comparator = createComparatorAndTriggerSearch(placeName);
                     var mapsState = comparator.getState().maps;
                     expect(mapsState[0].referencePoint).toBeDefined();
                     expect(mapsState[0].referencePoint.name).toEqual(placeName);
@@ -915,6 +924,7 @@ describe("DistanceComparator", function() {
                 });
 
                 it("absent after reference point dragging", function() {
+                    var comparator = createComparatorAndTriggerSearch("foo");
                     markers[1].getPosition.and.returnValue(new google.maps.LatLng(10, 20));
                     getEventHandler(markers[1].mockWrapper, "dragend")();
 
@@ -922,14 +932,6 @@ describe("DistanceComparator", function() {
                     expect(mapsState[0].referencePoint).toBeDefined();
                     expect(mapsState[0].referencePoint.name).toBeUndefined();
                 });
-            });
-
-            it("contains reference point name after creation", function() {
-                var comparator = new DistanceComparator.DistanceComparator(root, getMapSettings(["ref0", "ref1"]));
-                maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint.position);
-                var mapsState = comparator.getState().maps;
-                expect(mapsState[0].referencePoint.name).toEqual("ref0");
-                expect(mapsState[1].referencePoint.name).toEqual("ref1");
             });
 
             it("contains center position when reference point is absent", function() {
