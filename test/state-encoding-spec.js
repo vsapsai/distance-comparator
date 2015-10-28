@@ -21,12 +21,23 @@ describe("state <-> string conversion", function() {
                 .toEqual("comparison3=0.123457,-0.123457");
         });
 
-        it("encodes maps' reference points", function() {
+        it("encodes maps' reference point positions", function() {
             var mapState = {
-                referencePoint: new google.maps.LatLng(0.1234567, -0.1234567)
+                referencePoint: { position: new google.maps.LatLng(0.1234567, -0.1234567) }
             };
             expect(DistanceComparator.encodeStateToString({maps: [mapState]}))
                 .toEqual("ref0=0.123457,-0.123457");
+        });
+
+        it("encodes maps' reference point names", function() {
+            var mapState = {
+                referencePoint: {
+                    position: new google.maps.LatLng(0.1234567, -0.1234567),
+                    name: "location,& %name"
+                }
+            };
+            expect(DistanceComparator.encodeStateToString({maps: [mapState]}))
+                .toEqual("ref0=0.123457,-0.123457,location,%26+%25name");
         });
 
         it("encodes maps' center points", function() {
@@ -66,11 +77,22 @@ describe("state <-> string conversion", function() {
                 }});
         });
 
-        it("decodes maps' reference points", function() {
+        it("decodes maps' reference point positions", function() {
             expect(DistanceComparator.decodeStateFromString("ref1=0.123456,-7"))
                 .toEqual({maps: [
                     {},
-                    {referencePoint: new google.maps.LatLng(0.123456, -7)}
+                    {referencePoint: { position: new google.maps.LatLng(0.123456, -7) }}
+                ]});
+        });
+
+        it("decodes maps' reference point names", function() {
+            expect(DistanceComparator.decodeStateFromString("ref1=0.123456,-7,location,%26+%25name"))
+                .toEqual({maps: [
+                    {},
+                    {referencePoint: {
+                        position: new google.maps.LatLng(0.123456, -7),
+                        name: "location,& %name"
+                    }}
                 ]});
         });
 
@@ -133,6 +155,10 @@ describe("state <-> string conversion", function() {
 
             it("reference point infinity", function() {
                 expect(DistanceComparator.decodeStateFromString("ref0=0.123456,Infinity")).toEqual({});
+            });
+
+            it("reference point no coordinates", function() {
+                expect(DistanceComparator.decodeStateFromString("ref0=Ukraine")).toEqual({});
             });
 
             it("center point invalid index", function() {
