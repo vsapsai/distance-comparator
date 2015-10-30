@@ -78,17 +78,25 @@ describe("DistanceComparator", function() {
         return result;
     }
 
+    function getComparisonPointMapSettings(name) {
+        var result = {
+            comparisonPoint: {
+                mapIndex: 0,
+                position: new google.maps.LatLng(10, 20)
+            }
+        };
+        if (name) {
+            result.comparisonPoint.name = name;
+        }
+        return result;
+    }
+
     function createDistanceComparator() {
         return new DistanceComparator.DistanceComparator(root, mapSettings);
     }
 
     function createDistanceComparatorWithComparisonPoint() {
-        return new DistanceComparator.DistanceComparator(root, {
-            comparisonPoint: {
-                mapIndex: 0,
-                position: new google.maps.LatLng(10, 20)
-            }
-        });
+        return new DistanceComparator.DistanceComparator(root, getComparisonPointMapSettings());
     }
 
     beforeEach(mockGoogleMaps);
@@ -274,6 +282,20 @@ describe("DistanceComparator", function() {
             expect(searchBox0Element.value).toEqual("");
             var searchBox2Element = searchBoxes[2].__constructor__.calls.argsFor(0)[0];
             expect(searchBox2Element.value).toEqual("");
+        });
+
+        it("creates comparison point search boxes with specified names", function() {
+            var comparator = new DistanceComparator.DistanceComparator(root, getComparisonPointMapSettings("point"));
+            var searchBox1Element = searchBoxes[1].__constructor__.calls.argsFor(0)[0];
+            expect(searchBox1Element.value).toEqual("point");
+        });
+
+        it("creates empty comparison point search boxes if positions are absent", function() {
+            var settings = getComparisonPointMapSettings("point");
+            settings.comparisonPoint.position = undefined;
+            var comparator = new DistanceComparator.DistanceComparator(root, settings);
+            var searchBox1Element = searchBoxes[1].__constructor__.calls.argsFor(0)[0];
+            expect(searchBox1Element.value).toEqual("");
         });
 
         describe("without settings", function() {
@@ -869,6 +891,40 @@ describe("DistanceComparator", function() {
             var comparator = createDistanceComparator();
             maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint.position);
             expect(comparator.getState().comparisonPoint).toBeUndefined();
+        });
+
+        describe("comparison point name", function() {
+            function createComparatorAndTriggerSearch(placeName) {
+                var comparator = new DistanceComparator.DistanceComparator(root);
+                maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint.position);
+                searchBoxes[1].getPlaces.and.returnValue([mockPlace(30, 40)]);
+                var searchBox1Element = searchBoxes[1].__constructor__.calls.argsFor(0)[0];
+                searchBox1Element.value = placeName;
+                getEventHandler(searchBoxes[1].mockWrapper, "places_changed")();
+                return comparator;
+            }
+
+            it("present after creation", function() {
+                var placeName = "point";
+                var comparator = new DistanceComparator.DistanceComparator(root,
+                    getComparisonPointMapSettings(placeName));
+                maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint.position);
+                expect(comparator.getState().comparisonPoint.name).toEqual(placeName);
+            });
+
+            it("present after comparison point search", function() {
+                var placeName = "point";
+                var comparator = createComparatorAndTriggerSearch(placeName);
+                expect(comparator.getState().comparisonPoint.name).toEqual(placeName);
+            });
+
+            it("absent after double click", function() {
+                var comparator = createComparatorAndTriggerSearch("point");
+                getEventHandler(maps[0].mockWrapper, "dblclick")({latLng: new google.maps.LatLng(23, 56)});
+                expect(comparator.getState().comparisonPoint.name).toBeUndefined();
+            });
+
+            it("absent after comparison point dragging", function() {});
         });
 
         describe("map state", function() {

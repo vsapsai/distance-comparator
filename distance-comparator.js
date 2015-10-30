@@ -124,7 +124,7 @@ var DistanceComparator = (function() {
     /**
      * Represents a single map.
      */
-    var MapView = function(parentElement, mapConfig, zoom, centerOffset) {
+    var MapView = function(parentElement, mapConfig, zoom, centerOffset, comparisonPointName) {
         var referencePointPosition = undefined;
         if (mapConfig.referencePoint && mapConfig.referencePoint.position) {
             referencePointPosition = mapConfig.referencePoint.position;
@@ -146,7 +146,7 @@ var DistanceComparator = (function() {
             mapCenter = mapConfig.center;
         }
 
-        var mapElement = this.createMapElement();
+        var mapElement = this._createMapElement();
         parentElement.appendChild(mapElement);
         this.map = new google.maps.Map(mapElement, {
             zoom: zoom,
@@ -173,13 +173,16 @@ var DistanceComparator = (function() {
             markerConfig.visible = true;
         }
         this.marker = new google.maps.Marker(markerConfig);
-        var referencePointInputElement = this.createSearchBoxElement("Reference Point");
+        var referencePointInputElement = this._createSearchBoxElement("Reference Point");
         if (this.referencePoint.name) {
             referencePointInputElement.value = this.referencePoint.name;
         }
         var referencePointSearchBox = new google.maps.places.SearchBox(referencePointInputElement);
         this.map.controls[google.maps.ControlPosition.TOP_LEFT].push(referencePointInputElement);
-        var comparisonPointInputElement = this.createSearchBoxElement("Comparison Point");
+        var comparisonPointInputElement = this._createSearchBoxElement("Comparison Point");
+        if (comparisonPointName) {
+            comparisonPointInputElement.value = comparisonPointName;
+        }
         var comparisonPointSearchBox = new google.maps.places.SearchBox(comparisonPointInputElement);
         this.map.controls[google.maps.ControlPosition.TOP_LEFT].push(comparisonPointInputElement);
 
@@ -188,7 +191,7 @@ var DistanceComparator = (function() {
             self.delegate.mapDidMove(self);
         });
         google.maps.event.addDomListener(this.map, "dblclick", function(event) {
-            self.delegate.mapDidSelectComparisonPoint(self, event.latLng);
+            self.delegate.mapDidSelectComparisonPoint(self, event.latLng, null);
         });
         google.maps.event.addDomListener(this.map, "idle", function() {
             self.delegate.mapStateDidChange();
@@ -236,23 +239,23 @@ var DistanceComparator = (function() {
         });
         comparisonPointInputElement.addEventListener("change", function(event) {
             if (!event.target.value) {
-                self.delegate.mapDidSelectComparisonPoint(self, null);
+                self.delegate.mapDidSelectComparisonPoint(self, null, null);
             }
         });
         google.maps.event.addDomListener(comparisonPointSearchBox, "places_changed", function() {
             var places = comparisonPointSearchBox.getPlaces();
             var placePosition = (places.length > 0) ? places[0].geometry.location : null;
-            self.delegate.mapDidSelectComparisonPoint(self, placePosition);
+            self.delegate.mapDidSelectComparisonPoint(self, placePosition, comparisonPointInputElement.value);
         });
     };
 
-    MapView.prototype.createMapElement = function() {
+    MapView.prototype._createMapElement = function() {
         var mapElement = document.createElement("div");
         mapElement.classList.add("map-placeholder");
         return mapElement;
     };
 
-    MapView.prototype.createSearchBoxElement = function(placeholderText) {
+    MapView.prototype._createSearchBoxElement = function(placeholderText) {
         var inputElement = document.createElement("input");
         inputElement.setAttribute("type", "text");
         inputElement.setAttribute("placeholder", placeholderText);
@@ -323,16 +326,25 @@ var DistanceComparator = (function() {
         this.locationMarker = new google.maps.Marker({
             icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
         });
+        this.locationName = null;
         this.isBoundsUpdateInProgress = false;
         var zoom = (mapSettings && mapSettings.zoom) || DEFAULT_ZOOM;
         var centerOffset = mapSettings ? mapSettings.centerOffset : null;
+        var comparisonPointMapIndex = null;
+        if (mapSettings && mapSettings.comparisonPoint) {
+            comparisonPointMapIndex = mapSettings.comparisonPoint.mapIndex;
+        }
         var i;
         for (i = 0; i < 2; i++) {
             var mapConfig = {};
             if (mapSettings && mapSettings.maps && mapSettings.maps[i]) {
                 mapConfig = mapSettings.maps[i];
             }
-            var map = new MapView(comparatorElement, mapConfig, zoom, centerOffset);
+            var comparisonPointName = null;
+            if ((i === comparisonPointMapIndex) && mapSettings.comparisonPoint.position) {
+                comparisonPointName = mapSettings.comparisonPoint.name;
+            }
+            var map = new MapView(comparatorElement, mapConfig, zoom, centerOffset, comparisonPointName);
             map.delegate = this;
             map.tag = i;
             this.maps.push(map);
@@ -340,11 +352,14 @@ var DistanceComparator = (function() {
         if (mapSettings && mapSettings.comparisonPoint) {
             var mapIndex = mapSettings.comparisonPoint.mapIndex;
             var isValidComparisonPointConfig = mapSettings.comparisonPoint.position
-                && ((0 <= mapIndex) && (mapIndex < this.maps.length));
+                && ((0 <= comparisonPointMapIndex) && (comparisonPointMapIndex < this.maps.length));
             if (isValidComparisonPointConfig) {
                 this.locationMarker.setPosition(mapSettings.comparisonPoint.position);
-                var comparisonPointMapView = this.maps[mapSettings.comparisonPoint.mapIndex];
-                this.locationMarker.setMap(this.maps[mapSettings.comparisonPoint.mapIndex].getMap());
+                if (mapSettings.comparisonPoint.name) {
+                    this.locationName = mapSettings.comparisonPoint.name;
+                }
+                var comparisonPointMapView = this.maps[comparisonPointMapIndex];
+                this.locationMarker.setMap(comparisonPointMapView.getMap());
                 this.syncCircleState();
             }
         }
@@ -409,12 +424,14 @@ var DistanceComparator = (function() {
         return centerOffset;
     };
 
-    DistanceComparator.prototype.mapDidSelectComparisonPoint = function(mapView, position) {
+    DistanceComparator.prototype.mapDidSelectComparisonPoint = function(mapView, position, positionName) {
         if (position) {
             this.locationMarker.setMap(mapView.getMap());
             this.locationMarker.setPosition(position);
+            this.locationName = positionName;
         } else {
             this.locationMarker.setMap(null);
+            this.locationName = null;
         }
         this.syncCircleState();
         this.notifyStateDidChange();
@@ -453,6 +470,9 @@ var DistanceComparator = (function() {
                     mapIndex: i,
                     position: this.locationMarker.getPosition()
                 };
+                if (this.locationName) {
+                    state.comparisonPoint.name = this.locationName;
+                }
                 break;
             }
         }
@@ -475,8 +495,11 @@ var DistanceComparator = (function() {
             components.push("offset=" + getUrlValueForLatLngDifference(state.centerOffset));
         }
         if (state.comparisonPoint) {
-            components.push("comparison" + state.comparisonPoint.mapIndex +
-                            "=" + getUrlValueForLatLng(state.comparisonPoint.position));
+            var urlValue = getUrlValueForLatLng(state.comparisonPoint.position);
+            if (state.comparisonPoint.name) {
+                urlValue += "," + encodePlaceName(state.comparisonPoint.name);
+            }
+            components.push("comparison" + state.comparisonPoint.mapIndex + "=" + urlValue);
         }
         if (state.maps) {
             var i;
@@ -520,12 +543,10 @@ var DistanceComparator = (function() {
         }
         if (componentsDictionary.comparison0 || componentsDictionary.comparison1) {
             var mapIndex = componentsDictionary.comparison0 ? 0 : 1;
-            var position = parseLatLng(componentsDictionary.comparison0 || componentsDictionary.comparison1);
-            if (position) {
-                state.comparisonPoint = {
-                    mapIndex: mapIndex,
-                    position: position
-                };
+            var comparisonPoint = parseNamedPoint(componentsDictionary.comparison0 || componentsDictionary.comparison1);
+            if (comparisonPoint) {
+                state.comparisonPoint = comparisonPoint;
+                state.comparisonPoint.mapIndex = mapIndex;
             }
         }
         var mapStates = [{}, {}];

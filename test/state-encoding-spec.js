@@ -12,13 +12,23 @@ describe("state <-> string conversion", function() {
                 .toEqual("offset=0.123457,-0.123457");
         });
 
-        it("encodes comparison point", function() {
+        it("encodes comparison point position", function() {
             var comparisonPoint = {
                 mapIndex: 3,
                 position: new google.maps.LatLng(0.1234567, -0.1234567)
             };
             expect(DistanceComparator.encodeStateToString({comparisonPoint: comparisonPoint}))
                 .toEqual("comparison3=0.123457,-0.123457");
+        });
+
+        it("encodes comparison point name", function() {
+            var comparisonPoint = {
+                mapIndex: 3,
+                position: new google.maps.LatLng(0.1234567, -0.1234567),
+                name: "location,& %name"
+            };
+            expect(DistanceComparator.encodeStateToString({comparisonPoint: comparisonPoint}))
+                .toEqual("comparison3=0.123457,-0.123457,location,%26+%25name");
         });
 
         it("encodes maps' reference point positions", function() {
@@ -69,11 +79,20 @@ describe("state <-> string conversion", function() {
                 .toEqual({centerOffset: {latDiff: 0.123456, lngDiff: -7.0}});
         });
 
-        it("decodes comparison point", function() {
+        it("decodes comparison point position", function() {
             expect(DistanceComparator.decodeStateFromString("comparison1=0.123456,-7"))
                 .toEqual({comparisonPoint: {
                     mapIndex: 1,
                     position: new google.maps.LatLng(0.123456, -7)
+                }});
+        });
+
+        it("decodes comparison point name", function() {
+            expect(DistanceComparator.decodeStateFromString("comparison1=0.123456,-7,location,%26+%25name"))
+                .toEqual({comparisonPoint: {
+                    mapIndex: 1,
+                    position: new google.maps.LatLng(0.123456, -7),
+                    name: "location,& %name"
                 }});
         });
 
@@ -139,6 +158,10 @@ describe("state <-> string conversion", function() {
 
             it("comparison point infinity", function() {
                 expect(DistanceComparator.decodeStateFromString("comparison0=0.123456,Infinity")).toEqual({});
+            });
+
+            it("comparison point no coordinates", function() {
+                expect(DistanceComparator.decodeStateFromString("comparison0=Ukraine")).toEqual({});
             });
 
             it("reference point invalid index", function() {
