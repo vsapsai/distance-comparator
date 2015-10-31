@@ -18,6 +18,11 @@
 1. Search for a real location in the left map comparison point search box and select it => a marker should be put in correct location.
 2. Search for a real location in the left map reference point search box and select it => map and reference point marker on the left are moved to selected location, map is centered on the reference point, a circle is drawn on the left map only.
 
+## Double click should put a reference point marker.
+0. Reset the state, it is important there are no reference points.
+1. Double click the map on the left in the lower left corner => a marker should be put on the double click position, right map isn't moved.
+2. Double click the map on the right in the lower right corner => a marker should be put on the double click position, left map is moved so that the reference point marker is in the lower right corner too.
+
 
 # When one map has a reference point
 

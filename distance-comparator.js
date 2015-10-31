@@ -191,7 +191,19 @@ var DistanceComparator = (function() {
             self.delegate.mapDidMove(self);
         });
         google.maps.event.addDomListener(this.map, "dblclick", function(event) {
-            self.delegate.mapDidSelectComparisonPoint(self, event.latLng, null);
+            if (self.hasReferencePoint()) {
+                self.delegate.mapDidSelectComparisonPoint(self, event.latLng, null);
+            } else {
+                self.referencePoint = {
+                    position: event.latLng,
+                };
+                self.marker.setPosition(self.referencePoint.position);
+                self.marker.setVisible(true);
+                self.circle.setCenter(self.referencePoint.position);
+                self.delegate.referencePointDidMove(self);
+                self.delegate.mapDidMove(self);
+                self.delegate.mapStateDidChange();
+            }
         });
         google.maps.event.addDomListener(this.map, "idle", function() {
             self.delegate.mapStateDidChange();

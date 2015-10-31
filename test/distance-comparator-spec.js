@@ -486,6 +486,58 @@ describe("DistanceComparator", function() {
             expect(circles[1].setVisible).toHaveBeenCalledWith(true);
         });
 
+        describe("without reference point", function() {
+            it("puts reference point marker on double click point", function() {
+                var comparator = new DistanceComparator.DistanceComparator(root);
+                maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint.position);
+                var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
+                doubleClickHandler({latLng: new google.maps.LatLng(10, 20)});
+
+                expect(markers[1].setPosition.calls.mostRecent().args[0].lat()).toEqual(10);
+                expect(markers[1].setPosition.calls.mostRecent().args[0].lng()).toEqual(20);
+                expect(markers[1].setVisible).toHaveBeenCalledWith(true);
+                expect(markers[2].setPosition).not.toHaveBeenCalled();
+                expect(markers[2].setVisible).not.toHaveBeenCalled();
+
+            });
+
+            it("moves circle to double click point", function() {
+                var comparator = new DistanceComparator.DistanceComparator(root);
+                maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint.position);
+                var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
+                doubleClickHandler({latLng: new google.maps.LatLng(10, 20)});
+
+                expect(circles[0].setCenter.calls.mostRecent().args[0].lat()).toEqual(10);
+                expect(circles[0].setCenter.calls.mostRecent().args[0].lng()).toEqual(20);
+                expect(circles[1].setCenter).not.toHaveBeenCalled();
+            });
+
+            it("moves another map to have reference point in the same position relative to the map center", function() {
+                var comparator = new DistanceComparator.DistanceComparator(root, {maps: [
+                    {},
+                    {referencePoint: mapSettings.maps[1].referencePoint}
+                ]});
+                maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint.position);
+                var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
+                doubleClickHandler({latLng: new google.maps.LatLng(10, 20)});
+
+                expect(maps[1].setCenter.calls.mostRecent().args[0].lat()).toEqual(90);
+                expect(maps[1].setCenter.calls.mostRecent().args[0].lng()).toEqual(80);
+                expect(maps[0].setCenter).not.toHaveBeenCalled();
+            });
+
+            it("changes state", function() {
+                var comparator = new DistanceComparator.DistanceComparator(root);
+                var stateChangeHandler = jasmine.createSpy("stateChangeHandler");
+                comparator.setStateChangeHandler(stateChangeHandler);
+                maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint.position);
+
+                var doubleClickHandler = getEventHandler(maps[0].mockWrapper, "dblclick");
+                doubleClickHandler({latLng: new google.maps.LatLng(10, 20)});
+                expect(stateChangeHandler).toHaveBeenCalled();
+            });
+        });
+
         it("does not show a circle at map without reference point", function() {
             var comparator = new DistanceComparator.DistanceComparator(root, {maps: [
                 {},
@@ -927,7 +979,7 @@ describe("DistanceComparator", function() {
 
         describe("comparison point name", function() {
             function createComparatorAndTriggerSearch(placeName) {
-                var comparator = new DistanceComparator.DistanceComparator(root);
+                var comparator = createDistanceComparator();
                 maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint.position);
                 searchBoxes[1].getPlaces.and.returnValue([mockPlace(30, 40)]);
                 var searchBox1Element = searchBoxes[1].__constructor__.calls.argsFor(0)[0];
