@@ -324,7 +324,8 @@ var DistanceComparator = (function() {
     var DistanceComparator = function(comparatorElement, mapSettings) {
         this.maps = [];
         this.locationMarker = new google.maps.Marker({
-            icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+            icon: "http://maps.google.com/mapfiles/ms/icons/green-dot.png",
+            draggable: true
         });
         this.locationName = null;
         this.isBoundsUpdateInProgress = false;
@@ -363,6 +364,10 @@ var DistanceComparator = (function() {
                 this.syncCircleState();
             }
         }
+        var self = this;
+        google.maps.event.addDomListener(this.locationMarker, "dragend", function() {
+            self.updateComparisonPointPosition(self.locationMarker.getPosition(), null);
+        });
     };
 
     DistanceComparator.prototype.syncBoundsWithMap = function(mapIndex) {
@@ -424,17 +429,24 @@ var DistanceComparator = (function() {
         return centerOffset;
     };
 
-    DistanceComparator.prototype.mapDidSelectComparisonPoint = function(mapView, position, positionName) {
+    DistanceComparator.prototype.updateComparisonPointPosition = function(position, positionName) {
         if (position) {
-            this.locationMarker.setMap(mapView.getMap());
             this.locationMarker.setPosition(position);
             this.locationName = positionName;
         } else {
-            this.locationMarker.setMap(null);
             this.locationName = null;
         }
         this.syncCircleState();
         this.notifyStateDidChange();
+    };
+
+    DistanceComparator.prototype.mapDidSelectComparisonPoint = function(mapView, position, positionName) {
+        if (position) {
+            this.locationMarker.setMap(mapView.getMap());
+        } else {
+            this.locationMarker.setMap(null);
+        }
+        this.updateComparisonPointPosition(position, positionName);
     };
 
     DistanceComparator.prototype.mapStateDidChange = function() {

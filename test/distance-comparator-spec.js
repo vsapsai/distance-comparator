@@ -133,18 +133,22 @@ describe("DistanceComparator", function() {
             // Verify comparison point marker.
             expect(markers[0].__constructor__.calls.count()).toEqual(1);
             expect(markers[0].__constructor__.calls.argsFor(0)[0].map).toBeUndefined();
+            var marker0CreationConfig = markers[0].__constructor__.calls.argsFor(0)[0];
+            expect(marker0CreationConfig.draggable).toBeTruthy();
             // Verify 1st reference point marker.
             expect(markers[1].__constructor__.calls.count()).toEqual(1);
             var marker1CreationConfig = markers[1].__constructor__.calls.argsFor(0)[0];
             expect(marker1CreationConfig.position).toEqual(mapSettings.maps[0].referencePoint.position);
             expect(marker1CreationConfig.map).toEqual(maps[0].mockWrapper);
             expect(marker1CreationConfig.visible).toBeTruthy();
+            expect(marker1CreationConfig.draggable).toBeTruthy();
             // Verify 2nd reference point marker.
             expect(markers[2].__constructor__.calls.count()).toEqual(1);
             var marker2CreationConfig = markers[2].__constructor__.calls.argsFor(0)[0];
             expect(marker2CreationConfig.position).toEqual(mapSettings.maps[1].referencePoint.position);
             expect(marker2CreationConfig.map).toEqual(maps[1].mockWrapper);
             expect(marker2CreationConfig.visible).toBeTruthy();
+            expect(marker2CreationConfig.draggable).toBeTruthy();
         });
 
         it("creates comparison point with specified settings", function() {
@@ -568,7 +572,35 @@ describe("DistanceComparator", function() {
     });
 
     describe("dragging comparison point", function() {
-        //TODO(vsapsai): add support
+        it("updates circle radius", function() {
+            var settings = getMapSettings();
+            settings.comparisonPoint = {
+                mapIndex: 0,
+                position: new google.maps.LatLng(10, 0)
+            }
+            var comparator = new DistanceComparator.DistanceComparator(root, settings);
+            // Simulate dragging comparison point.
+            maps[0].getCenter.and.returnValue(settings.maps[0].referencePoint.position);
+            markers[0].getPosition.and.returnValue(new google.maps.LatLng(40, 30));
+
+            var dragHandler = getEventHandler(markers[0].mockWrapper, "dragend");
+            expect(dragHandler).toBeDefined();
+            dragHandler();
+            expect(circles[0].setRadius).toHaveBeenCalledWith(50);
+            expect(circles[1].setRadius).toHaveBeenCalledWith(50);
+        });
+
+        it("changes state", function() {
+            var comparator = createDistanceComparatorWithComparisonPoint();
+            var stateChangeHandler = jasmine.createSpy("stateChangeHandler");
+            comparator.setStateChangeHandler(stateChangeHandler);
+            maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint.position);
+            markers[0].getPosition.and.returnValue(new google.maps.LatLng(10, 20));
+
+            var dragHandler = getEventHandler(markers[0].mockWrapper, "dragend");
+            dragHandler();
+            expect(stateChangeHandler).toHaveBeenCalled();
+        });
     });
 
     describe("reference point search", function() {
@@ -924,7 +956,12 @@ describe("DistanceComparator", function() {
                 expect(comparator.getState().comparisonPoint.name).toBeUndefined();
             });
 
-            it("absent after comparison point dragging", function() {});
+            it("absent after comparison point dragging", function() {
+                var comparator = createComparatorAndTriggerSearch("point");
+                markers[0].getPosition.and.returnValue(new google.maps.LatLng(10, 20));
+                getEventHandler(markers[0].mockWrapper, "dragend")();
+                expect(comparator.getState().comparisonPoint.name).toBeUndefined();
+            });
         });
 
         describe("map state", function() {
