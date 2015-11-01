@@ -101,9 +101,6 @@ describe("DistanceComparator", function() {
 
     beforeEach(mockGoogleMaps);
 
-    //TODO(vsapsai): test all functionality when both reference points
-    // specified, 1 point, and no reference points.
-
     describe("creation", function() {
         it("creates maps according to mapSettings", function() {
             var comparator = createDistanceComparator()
