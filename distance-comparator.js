@@ -257,6 +257,9 @@ var DistanceComparator = (function() {
         google.maps.event.addDomListener(comparisonPointSearchBox, "places_changed", function() {
             var places = comparisonPointSearchBox.getPlaces();
             var placePosition = (places.length > 0) ? places[0].geometry.location : null;
+            if (placePosition && !self.hasReferencePoint()) {
+                self.map.setCenter(placePosition);
+            }
             self.delegate.mapDidSelectComparisonPoint(self, placePosition, comparisonPointInputElement.value);
         });
     };

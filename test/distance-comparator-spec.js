@@ -868,6 +868,15 @@ describe("DistanceComparator", function() {
             expect(circles[1].setVisible).toHaveBeenCalledWith(false);
         });
 
+        it("moves map to show comparison point if reference point is absent", function() {
+            var comparator = new DistanceComparator.DistanceComparator(root);
+            searchBoxes[1].getPlaces.and.returnValue([mockPlace(23, 56)]);
+
+            getEventHandler(searchBoxes[1].mockWrapper, "places_changed")();
+            expect(maps[0].setCenter.calls.mostRecent().args[0].lat()).toEqual(23);
+            expect(maps[0].setCenter.calls.mostRecent().args[0].lng()).toEqual(56);
+        });
+
         describe("empty search string", function() {
             it("removes comparison point marker", function() {
                 var comparator = createDistanceComparatorWithComparisonPoint();
