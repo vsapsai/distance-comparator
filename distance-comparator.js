@@ -231,7 +231,6 @@ var DistanceComparator = (function() {
             if (!centerOffset) {
                 centerOffset = self.delegate.getSharedCenterOffset();
             }
-            //TODO(vsapsai): update comparison point in some cases.
             self.referencePoint = {
                 position: newReferencePoint,
                 name: referencePointInputElement.value
@@ -257,8 +256,12 @@ var DistanceComparator = (function() {
         google.maps.event.addDomListener(comparisonPointSearchBox, "places_changed", function() {
             var places = comparisonPointSearchBox.getPlaces();
             var placePosition = (places.length > 0) ? places[0].geometry.location : null;
-            if (placePosition && !self.hasReferencePoint()) {
-                self.map.setCenter(placePosition);
+            if (placePosition) {
+                if (self.hasReferencePoint()) {
+                    self._zoomToShowPoint(placePosition);
+                } else {
+                    self.map.setCenter(placePosition);
+                }
             }
             self.delegate.mapDidSelectComparisonPoint(self, placePosition, comparisonPointInputElement.value);
         });
@@ -294,6 +297,23 @@ var DistanceComparator = (function() {
 
     MapView.prototype.setZoom = function(zoom) {
         this.map.setZoom(zoom);
+    };
+
+    MapView.prototype._zoomToShowPoint = function(position) {
+        var map = this.getMap();
+        if (map.getBounds().contains(position)) {
+            return;
+        }
+        // Calculate desired bounds.
+        var center = map.getCenter();
+        var distance = google.maps.geometry.spherical.computeDistanceBetween(position, center);
+        var heading = google.maps.geometry.spherical.computeHeading(position, center);
+        var to = google.maps.geometry.spherical.computeOffset(center, distance, heading);
+        var desiredBounds = new google.maps.LatLngBounds();
+        desiredBounds = desiredBounds.extend(position);
+        desiredBounds = desiredBounds.extend(to);
+        // Set new bounds.
+        map.fitBounds(desiredBounds);
     };
 
     MapView.prototype.hasReferencePoint = function() {

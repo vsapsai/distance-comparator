@@ -24,10 +24,41 @@ google.maps.LatLng.prototype.lat = function() {
 google.maps.LatLng.prototype.lng = function() {
     return this._lng;
 };
+google.maps.LatLngBounds = function(left, right, bottom, top) {
+    this._left = left || 0;
+    this._right = right || 0;
+    this._bottom = bottom || 0;
+    this._top = top || 0;
+};
+google.maps.LatLngBounds.prototype.contains = function(position) {
+    var lat = position.lat();
+    var lng = position.lng();
+    return ((this._bottom <= lat) && (lat <= this._top))
+        && ((this._left <= lng) && (lng <= this._right));
+};
+google.maps.LatLngBounds.prototype.extend = function(position) {
+    var lat = position.lat();
+    var lng = position.lng();
+    return new google.maps.LatLngBounds(
+        Math.min(this._left, lng),
+        Math.max(this._right, lng),
+        Math.min(this._bottom, lat),
+        Math.max(this._top, lat)
+    );
+};
 google.maps.geometry.spherical.computeDistanceBetween = function(from, to) {
     var latDifference = to.lat() - from.lat();
     var lngDifference = to.lng() - from.lng();
     return Math.sqrt(latDifference*latDifference + lngDifference*lngDifference);
+};
+google.maps.geometry.spherical.computeHeading = function(from, to) {
+    return Math.atan2(to.lat() - from.lat(), to.lng() - from.lng());
+};
+google.maps.geometry.spherical.computeOffset = function(from, distance, heading) {
+    return new google.maps.LatLng(
+        from.lat() + distance * Math.sin(heading),
+        from.lng() + distance * Math.cos(heading)
+    );
 };
 
 function mockClass(className, methods, objectsContainer) {

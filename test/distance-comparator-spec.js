@@ -27,7 +27,8 @@ describe("DistanceComparator", function() {
         markers = [];
         circles = [];
         searchBoxes = [];
-        google.maps.Map = mockClass("Map", ["getZoom", "setZoom", "getCenter", "setCenter"], maps);
+        google.maps.Map = mockClass("Map", ["getZoom", "setZoom", "getCenter", "setCenter",
+            "getBounds", "fitBounds"], maps);
         google.maps.Map.prototype.controls = {};
         google.maps.Map.prototype.controls[google.maps.ControlPosition.TOP_LEFT] = [];
         google.maps.Marker = mockClass("Marker", ["property:Map", "property:Position", "setVisible"], markers);
@@ -90,6 +91,9 @@ describe("DistanceComparator", function() {
         }
         return result;
     }
+
+    function InfiniteBounds() {}
+    InfiniteBounds.prototype.contains = function() { return true; };
 
     function createDistanceComparator() {
         return new DistanceComparator.DistanceComparator(root, mapSettings);
@@ -816,6 +820,7 @@ describe("DistanceComparator", function() {
     describe("comparison point search", function() {
         it("puts comparison location marker on place location", function() {
             var comparator = createDistanceComparator();
+            maps[0].getBounds.and.returnValue(new InfiniteBounds());
             searchBoxes[1].getPlaces.and.returnValue([mockPlace(23, 56)]);
 
             var searchBoxHandler = getEventHandler(searchBoxes[1].mockWrapper, "places_changed");
@@ -827,6 +832,8 @@ describe("DistanceComparator", function() {
 
         it("moves comparison location marker to map where searched for comparison point", function() {
             var comparator = createDistanceComparator();
+            maps[0].getBounds.and.returnValue(new InfiniteBounds());
+            maps[1].getBounds.and.returnValue(new InfiniteBounds());
             searchBoxes[1].getPlaces.and.returnValue([mockPlace(23, 56)]);
             searchBoxes[3].getPlaces.and.returnValue([mockPlace(23, 56)]);
 
@@ -840,6 +847,7 @@ describe("DistanceComparator", function() {
 
         it("shows circles with radius as distance from reference point to comparison point", function() {
             var comparator = createDistanceComparator();
+            maps[1].getBounds.and.returnValue(new InfiniteBounds());
             searchBoxes[3].getPlaces.and.returnValue([mockPlace(130, 140)]);
 
             var searchBoxHandler = getEventHandler(searchBoxes[3].mockWrapper, "places_changed");
@@ -872,6 +880,31 @@ describe("DistanceComparator", function() {
             getEventHandler(searchBoxes[1].mockWrapper, "places_changed")();
             expect(maps[0].setCenter.calls.mostRecent().args[0].lat()).toEqual(23);
             expect(maps[0].setCenter.calls.mostRecent().args[0].lng()).toEqual(56);
+        });
+
+        it("zooms out to show both reference point and comparison point", function() {
+            var comparator = createDistanceComparator();
+            maps[0].getBounds.and.returnValue(new google.maps.LatLngBounds(-50, 50, -50, 50));
+            maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint.position);
+            searchBoxes[1].getPlaces.and.returnValue([mockPlace(-63, 78)]);
+
+            getEventHandler(searchBoxes[1].mockWrapper, "places_changed")();
+            expect(maps[0].fitBounds).toHaveBeenCalled();
+            var newBounds = maps[0].fitBounds.calls.mostRecent().args[0];
+            expect(newBounds._left).toEqual(-78);
+            expect(newBounds._right).toEqual(78);
+            expect(newBounds._bottom).toEqual(-63);
+            expect(newBounds._top).toEqual(63);
+        });
+
+        it("does not change zoom if reference point and comparison point already visible", function() {
+            var comparator = createDistanceComparator();
+            maps[0].getBounds.and.returnValue(new google.maps.LatLngBounds(-50, 50, -50, 50));
+            maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint.position);
+            searchBoxes[1].getPlaces.and.returnValue([mockPlace(30, 40)]);
+
+            getEventHandler(searchBoxes[1].mockWrapper, "places_changed")();
+            expect(maps[0].fitBounds).not.toHaveBeenCalled();
         });
 
         describe("empty search string", function() {
@@ -919,6 +952,7 @@ describe("DistanceComparator", function() {
             var stateChangeHandler = jasmine.createSpy("stateChangeHandler");
             comparator.setStateChangeHandler(stateChangeHandler);
             maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint.position);
+            maps[1].getBounds.and.returnValue(new InfiniteBounds());
             searchBoxes[3].getPlaces.and.returnValue([mockPlace(130, 140)]);
 
             var searchBoxHandler = getEventHandler(searchBoxes[3].mockWrapper, "places_changed");
@@ -987,6 +1021,7 @@ describe("DistanceComparator", function() {
             function createComparatorAndTriggerSearch(placeName) {
                 var comparator = createDistanceComparator();
                 maps[0].getCenter.and.returnValue(mapSettings.maps[0].referencePoint.position);
+                maps[0].getBounds.and.returnValue(new InfiniteBounds());
                 searchBoxes[1].getPlaces.and.returnValue([mockPlace(30, 40)]);
                 var searchBox1Element = searchBoxes[1].__constructor__.calls.argsFor(0)[0];
                 searchBox1Element.value = placeName;

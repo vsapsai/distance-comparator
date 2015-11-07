@@ -65,6 +65,10 @@
 1. Search for a real location in the left map comparison point search box and select it => the comparison marker should be put on selected location, circles should be drawn.
 2. Search for a real location in the right map comparison point search box and select it => the comparison marker should be shown on the right map in correct location, circles should update radii.
 
+## Searching for a comparison point zooms out if necessary.
+1. Search for a real, already visible location in right map comparison point search box and select it => the comparison marker should be put on selected location, no zooming.
+2. Search for a real, outside of the map location in right map comparison point search box and select it => maps zoom out to show this new location.
+
 ## Clearing a search box removes corresponding marker.
 1. Clear value in the right map reference point search box and press enter => the reference point marker on the right map is hidden, on the left map it is still present, circles on both maps are hidden.
 2. Clear value in the right map comparison point search box and press enter => the comparison marker should be hidden.
